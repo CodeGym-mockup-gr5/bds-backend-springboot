@@ -8,5 +8,7 @@ public interface NhanVienRepository extends JpaRepository<NhanVien, Long> {
 
     boolean existsByEmailIgnoreCase(String email);
 
+    boolean existsBySoDienThoai(String soDienThoai);
+
     boolean existsByLaAdminTrue();
 }
