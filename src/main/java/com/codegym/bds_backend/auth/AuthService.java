@@ -19,6 +19,7 @@ import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -38,6 +39,7 @@ public class AuthService {
     private final KhachHangRepository khachHangRepository;
     private final NhanVienRepository nhanVienRepository;
     private final TokenXacThucService tokenXacThucService;
+    private final TokenBlacklistService tokenBlacklistService;
     private final MailService mailService;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
@@ -68,6 +70,16 @@ public class AuthService {
         String token = jwtService.generateToken(
                 new JwtPrincipal(taiKhoan.getId(), taiKhoan.getTenDangNhap(), thongTin.vaiTro()));
         return new LoginResponse(token, thongTin);
+    }
+
+    public void logoutTaiKhoan(String authHeader) {
+        if (authHeader != null && authHeader.startsWith("Bearer ")) {
+            String token = authHeader.substring(7).trim();
+            jwtService.extractExpiration(token).ifPresent(expiresAt ->
+                    tokenBlacklistService.revokeToken(token, expiresAt));
+        }
+        SecurityContextHolder.clearContext();
+        log.info("Người dùng đã đăng xuất thành công");
     }
 
     @Transactional
