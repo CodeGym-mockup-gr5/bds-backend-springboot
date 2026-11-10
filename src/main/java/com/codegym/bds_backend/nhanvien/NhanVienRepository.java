@@ -10,7 +10,8 @@ public interface NhanVienRepository extends JpaRepository<NhanVien, Long> {
 
     boolean existsByEmailIgnoreCase(String email);
 
-    boolean existsByEmailIgnoreCaseAndIdNot(String email, Long id);
+    @Query(value = "SELECT COUNT(*) > 0 FROM nhan_vien WHERE LOWER(email) = LOWER(:email) AND id <> :id", nativeQuery = true)
+    boolean existsByEmailIgnoreCaseAndIdNot(@Param("email") String email, @Param("id") Long id);
 
     boolean existsByLaAdminTrue();
 
