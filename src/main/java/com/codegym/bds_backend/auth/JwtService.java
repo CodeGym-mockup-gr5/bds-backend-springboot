@@ -13,10 +13,8 @@ import java.util.Optional;
 import javax.crypto.SecretKey;
 import org.springframework.stereotype.Service;
 
-/** Tạo và đọc JWT. Khóa và thời hạn lấy từ application.yml (app.security.jwt). */
 @Service
 public class JwtService {
-
     private final SecretKey key;
     private final long expirationMillis;
 
@@ -42,7 +40,6 @@ public class JwtService {
                 .compact();
     }
 
-    /** Trả rỗng nếu token sai, hết hạn hoặc bị sửa. */
     public Optional<JwtPrincipal> parse(String token) {
         try {
             Claims claims =

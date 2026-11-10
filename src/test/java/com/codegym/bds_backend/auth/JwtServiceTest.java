@@ -9,7 +9,6 @@ import java.util.List;
 import org.junit.jupiter.api.Test;
 
 class JwtServiceTest {
-
     private static final String SECRET = "test-secret-test-secret-test-secret-1234";
 
     private static AppProperties props(String secret, long minutes) {

@@ -30,7 +30,7 @@ CREATE TABLE nhan_vien (
     ngay_sinh       DATE         NOT NULL,
     gioi_tinh       VARCHAR(3)   NOT NULL,
     dia_chi         VARCHAR(255) NOT NULL,
-    so_dien_thoai   VARCHAR(11)  NOT NULL,
+    so_dien_thoai   VARCHAR(10)  NOT NULL,
     email           VARCHAR(254) NOT NULL,
     chuc_vu         VARCHAR(20)  NOT NULL,
     la_admin        BOOLEAN      NOT NULL DEFAULT FALSE,
@@ -39,7 +39,7 @@ CREATE TABLE nhan_vien (
     CONSTRAINT uq_nhan_vien_ma UNIQUE (ma_nv),
     CONSTRAINT uq_nhan_vien_email UNIQUE (email),
     CONSTRAINT ck_nhan_vien_gioi_tinh CHECK (gioi_tinh IN ('NAM', 'NU')),
-    CONSTRAINT ck_nhan_vien_sdt CHECK (so_dien_thoai REGEXP '^0[0-9]{9,10}$'),
+    CONSTRAINT ck_nhan_vien_sdt CHECK (so_dien_thoai REGEXP '^0[0-9]{9}$'),
     CONSTRAINT ck_nhan_vien_chuc_vu CHECK (chuc_vu IN ('TRUONG_PHONG', 'KE_TOAN', 'NHAN_VIEN'))
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
 
@@ -55,7 +55,7 @@ CREATE TABLE khach_hang (
     ngay_sinh       DATE         NULL,
     gioi_tinh       VARCHAR(3)   NULL,
     dia_chi         VARCHAR(255) NULL,
-    so_dien_thoai   VARCHAR(11)  NOT NULL,
+    so_dien_thoai   VARCHAR(10)  NOT NULL,
     email           VARCHAR(254) NULL,
     so_cccd         CHAR(12)     NULL,
     deleted_at      DATETIME     NULL,
@@ -63,7 +63,7 @@ CREATE TABLE khach_hang (
     CONSTRAINT uq_khach_hang_ma UNIQUE (ma_kh),
     CONSTRAINT uq_khach_hang_cccd UNIQUE (so_cccd),
     CONSTRAINT ck_khach_hang_gioi_tinh CHECK (gioi_tinh IS NULL OR gioi_tinh IN ('NAM', 'NU')),
-    CONSTRAINT ck_khach_hang_sdt CHECK (so_dien_thoai REGEXP '^0[0-9]{9,10}$'),
+    CONSTRAINT ck_khach_hang_sdt CHECK (so_dien_thoai REGEXP '^0[0-9]{9}$'),
     CONSTRAINT ck_khach_hang_cccd CHECK (so_cccd IS NULL OR so_cccd REGEXP '^[0-9]{12}$')
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
 
