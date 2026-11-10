@@ -1,0 +1,27 @@
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: bds-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: bds_broker
+      TZ: Asia/Ho_Chi_Minh
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+    ports:
+      - "3307:3306"
+    volumes:
+      - bds-mysql-data:/var/lib/mysql
+      # Cac file .sql trong init/ chi duoc chay MOT LAN, khi volume du lieu con trong,
+      # theo thu tu ten file (01 truoc, 02 sau).
+      - ./init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-proot"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+volumes:
+  bds-mysql-data:
