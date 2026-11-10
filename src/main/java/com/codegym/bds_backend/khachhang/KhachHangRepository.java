@@ -7,4 +7,6 @@ public interface KhachHangRepository extends JpaRepository<KhachHang, Long> {
     Optional<KhachHang> findBySoCccd(String soCccd);
 
     boolean existsBySoCccd(String soCccd);
+
+    boolean existsByEmailIgnoreCase(String email);
 }

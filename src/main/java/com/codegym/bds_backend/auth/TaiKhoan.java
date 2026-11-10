@@ -23,6 +23,7 @@ import org.hibernate.type.SqlTypes;
 @Setter
 @NoArgsConstructor
 public class TaiKhoan {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -47,4 +48,19 @@ public class TaiKhoan {
 
     @Column(name = "bi_khoa", nullable = false)
     private boolean biKhoa;
+
+    public boolean chuSoHuuConHieuLuc() {
+        if (nhanVien != null) {
+            return nhanVien.getDeletedAt() == null;
+        }
+        return khachHang != null && khachHang.getDeletedAt() == null;
+    }
+
+    public String emailLienHe() {
+        return nhanVien != null ? nhanVien.getEmail() : khachHang != null ? khachHang.getEmail() : null;
+    }
+
+    public String hoTenChuSoHuu() {
+        return nhanVien != null ? nhanVien.getHoTen() : khachHang != null ? khachHang.getHoTen() : null;
+    }
 }
