@@ -1,0 +1,15 @@
+# File mẫu. Sao chép thành application-local.yml (file này đã được git bỏ qua) rồi điền giá trị thật.
+spring:
+  mail:
+    username: your-email@gmail.com
+    password: your-app-password
+app:
+  security:
+    jwt:
+      secret: chuoi-ngau-nhien-it-nhat-32-ky-tu-cua-ban-o-day
+  mail:
+    from: your-email@gmail.com
+  cloudinary:
+    cloud-name: your-cloud-name
+    api-key: your-api-key
+    api-secret: your-api-secret

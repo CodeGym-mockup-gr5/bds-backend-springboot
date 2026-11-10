@@ -11,23 +11,13 @@
 	<groupId>com.codegym</groupId>
 	<artifactId>bds-backend</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<name/>
-	<description/>
-	<url/>
-	<licenses>
-		<license/>
-	</licenses>
-	<developers>
-		<developer/>
-	</developers>
-	<scm>
-		<connection/>
-		<developerConnection/>
-		<tag/>
-		<url/>
-	</scm>
+	<name>bds-backend</name>
+	<description>Backend quản lý trung tâm môi giới bất động sản</description>
 	<properties>
 		<java.version>17</java.version>
+		<jjwt.version>0.13.0</jjwt.version>
+		<springdoc.version>3.2.0</springdoc.version>
+		<cloudinary.version>2.5.0</cloudinary.version>
 	</properties>
 	<dependencies>
 		<dependency>
@@ -49,6 +39,39 @@
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-webmvc</artifactId>
+		</dependency>
+
+		<!-- JWT. Dùng bản Gson để không lẫn với Jackson 3 của Spring Boot 4 -->
+		<dependency>
+			<groupId>io.jsonwebtoken</groupId>
+			<artifactId>jjwt-api</artifactId>
+			<version>${jjwt.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>io.jsonwebtoken</groupId>
+			<artifactId>jjwt-impl</artifactId>
+			<version>${jjwt.version}</version>
+			<scope>runtime</scope>
+		</dependency>
+		<dependency>
+			<groupId>io.jsonwebtoken</groupId>
+			<artifactId>jjwt-gson</artifactId>
+			<version>${jjwt.version}</version>
+			<scope>runtime</scope>
+		</dependency>
+
+		<!-- Swagger UI. Nếu lỗi tương thích, thử springdoc 3.0.x -->
+		<dependency>
+			<groupId>org.springdoc</groupId>
+			<artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+			<version>${springdoc.version}</version>
+		</dependency>
+
+		<!-- Upload ảnh -->
+		<dependency>
+			<groupId>com.cloudinary</groupId>
+			<artifactId>cloudinary-http5</artifactId>
+			<version>${cloudinary.version}</version>
 		</dependency>
 
 		<dependency>
