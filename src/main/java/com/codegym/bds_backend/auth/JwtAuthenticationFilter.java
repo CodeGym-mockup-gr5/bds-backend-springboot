@@ -12,10 +12,8 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.filter.OncePerRequestFilter;
 
-/** Đọc header "Authorization: Bearer <token>", nếu hợp lệ thì đặt người dùng vào SecurityContext. */
 @RequiredArgsConstructor
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
-
     private static final String BEARER_PREFIX = "Bearer ";
 
     private final JwtService jwtService;
