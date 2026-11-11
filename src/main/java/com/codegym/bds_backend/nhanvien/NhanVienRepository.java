@@ -12,6 +12,10 @@ public interface NhanVienRepository extends JpaRepository<NhanVien, Long> {
 
     boolean existsByEmailIgnoreCase(String email);
 
+    @Query(value = "SELECT COUNT(*) > 0 FROM nhan_vien WHERE LOWER(email) = LOWER(:email) AND id <> :id",
+            nativeQuery = true)
+    boolean existsByEmailIgnoreCaseAndIdNot(@Param("email") String email, @Param("id") Long id);
+
     boolean existsByLaAdminTrue();
 
     @Query("SELECT nv FROM NhanVien nv "
@@ -25,4 +29,7 @@ public interface NhanVienRepository extends JpaRepository<NhanVien, Long> {
             @Param("chucVu") ChucVu chucVu,
             @Param("email") String email,
             Pageable pageable);
+
+    @Query("select t.nhanVien from TaiKhoan t where t.id = :taiKhoanId and t.nhanVien is not null")
+    Optional<NhanVien> findByTaiKhoanId(@Param("taiKhoanId") Long taiKhoanId);
 }
