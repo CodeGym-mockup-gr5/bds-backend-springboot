@@ -12,10 +12,13 @@ import static org.mockito.Mockito.when;
 import com.codegym.bds_backend.auth.JwtPrincipal;
 import com.codegym.bds_backend.auth.TaiKhoan;
 import com.codegym.bds_backend.auth.TaiKhoanRepository;
+import com.codegym.bds_backend.auth.TaiKhoanService;
 import com.codegym.bds_backend.common.enums.GioiTinh;
 import com.codegym.bds_backend.common.exception.BusinessException;
 import com.codegym.bds_backend.common.exception.NotFoundException;
 import com.codegym.bds_backend.common.response.PageResponse;
+import com.codegym.bds_backend.khachhang.KhachHangRepository;
+import com.codegym.bds_backend.nhanvien.dto.CreateNhanVienRequest;
 import com.codegym.bds_backend.nhanvien.dto.NhanVienResponse;
 import java.time.LocalDate;
 import java.util.List;
@@ -37,11 +40,21 @@ class NhanVienServiceTest {
     @Mock
     private TaiKhoanRepository taiKhoanRepository;
 
+    @Mock
+    private TaiKhoanService taiKhoanService;
+
+    @Mock
+    private KhachHangRepository khachHangRepository;
+
     private NhanVienService service;
 
     @BeforeEach
     void setUp() {
-        service = new NhanVienService(nhanVienRepository, taiKhoanRepository);
+        service = new NhanVienService(
+                nhanVienRepository,
+                taiKhoanRepository,
+                taiKhoanService,
+                khachHangRepository);
     }
 
     @Test
@@ -79,6 +92,100 @@ class NhanVienServiceTest {
         when(nhanVienRepository.findById(999L)).thenReturn(Optional.empty());
 
         assertThrows(NotFoundException.class, () -> service.findNhanVienById(999L));
+    }
+
+    @Test
+    void shouldCreateNhanVienSuccessfully() {
+        CreateNhanVienRequest request = new CreateNhanVienRequest(
+                "Lê Văn C",
+                LocalDate.of(1995, 5, 20),
+                GioiTinh.NAM,
+                "123 Nguyễn Huệ, Đà Nẵng",
+                "0912345680",
+                "c.le@example.com",
+                ChucVu.NHAN_VIEN,
+                false,
+                "c.le");
+
+        when(nhanVienRepository.existsByEmailIgnoreCase("c.le@example.com")).thenReturn(false);
+        when(khachHangRepository.existsByEmailIgnoreCase("c.le@example.com")).thenReturn(false);
+        when(nhanVienRepository.existsBySoDienThoai("0912345680")).thenReturn(false);
+        when(taiKhoanRepository.existsByTenDangNhap("c.le")).thenReturn(false);
+
+        NhanVien saved = createSampleNhanVien(10L, null, "Lê Văn C", "c.le@example.com", "0912345680");
+        when(nhanVienRepository.saveAndFlush(any(NhanVien.class))).thenReturn(saved);
+
+        NhanVienResponse response = service.createNhanVien(request);
+
+        assertNotNull(response);
+        assertEquals("MNV-010", response.maNv());
+        assertEquals("Lê Văn C", response.hoTen());
+        verify(taiKhoanService).createTaiKhoanChoNhanVien(saved, "c.le");
+    }
+
+    @Test
+    void shouldThrowWhenCreatingWithExistingEmail() {
+        CreateNhanVienRequest request = new CreateNhanVienRequest(
+                "Lê Văn C",
+                LocalDate.of(1995, 5, 20),
+                GioiTinh.NAM,
+                "123 Nguyễn Huệ",
+                "0912345680",
+                "trung@example.com",
+                ChucVu.NHAN_VIEN,
+                false,
+                null);
+
+        when(nhanVienRepository.existsByEmailIgnoreCase("trung@example.com")).thenReturn(true);
+
+        BusinessException e = assertThrows(BusinessException.class, () -> service.createNhanVien(request));
+        assertEquals("Email đã được sử dụng", e.getMessage());
+        verify(nhanVienRepository, never()).saveAndFlush(any());
+    }
+
+    @Test
+    void shouldThrowWhenCreatingWithExistingPhone() {
+        CreateNhanVienRequest request = new CreateNhanVienRequest(
+                "Lê Văn C",
+                LocalDate.of(1995, 5, 20),
+                GioiTinh.NAM,
+                "123 Nguyễn Huệ",
+                "0912345680",
+                "c@example.com",
+                ChucVu.NHAN_VIEN,
+                false,
+                null);
+
+        when(nhanVienRepository.existsByEmailIgnoreCase("c@example.com")).thenReturn(false);
+        when(khachHangRepository.existsByEmailIgnoreCase("c@example.com")).thenReturn(false);
+        when(nhanVienRepository.existsBySoDienThoai("0912345680")).thenReturn(true);
+
+        BusinessException e = assertThrows(BusinessException.class, () -> service.createNhanVien(request));
+        assertEquals("Số điện thoại đã được sử dụng", e.getMessage());
+        verify(nhanVienRepository, never()).saveAndFlush(any());
+    }
+
+    @Test
+    void shouldThrowWhenCreatingWithExistingUsername() {
+        CreateNhanVienRequest request = new CreateNhanVienRequest(
+                "Lê Văn C",
+                LocalDate.of(1995, 5, 20),
+                GioiTinh.NAM,
+                "123 Nguyễn Huệ",
+                "0912345680",
+                "c@example.com",
+                ChucVu.NHAN_VIEN,
+                false,
+                "c_user");
+
+        when(nhanVienRepository.existsByEmailIgnoreCase("c@example.com")).thenReturn(false);
+        when(khachHangRepository.existsByEmailIgnoreCase("c@example.com")).thenReturn(false);
+        when(nhanVienRepository.existsBySoDienThoai("0912345680")).thenReturn(false);
+        when(taiKhoanRepository.existsByTenDangNhap("c_user")).thenReturn(true);
+
+        BusinessException e = assertThrows(BusinessException.class, () -> service.createNhanVien(request));
+        assertEquals("Tên đăng nhập đã tồn tại", e.getMessage());
+        verify(nhanVienRepository, never()).saveAndFlush(any());
     }
 
     @Test
@@ -139,4 +246,3 @@ class NhanVienServiceTest {
         return nv;
     }
 }
-

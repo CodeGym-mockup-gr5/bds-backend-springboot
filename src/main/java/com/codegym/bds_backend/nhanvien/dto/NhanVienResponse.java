@@ -31,4 +31,3 @@ public record NhanVienResponse(
                 nv.isLaAdmin());
     }
 }
-
