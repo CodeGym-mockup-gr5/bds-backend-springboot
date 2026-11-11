@@ -8,6 +8,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class BatDongSanMapper {
 
+    /** Chuyển BĐS sang dòng danh sách; thông tin chủ sở hữu để null nếu không có. */
     public BatDongSanListItemResponse toListItemResponse(BatDongSan bds, String anhDaiDien) {
         KhachHang chuSoHuu = bds.getKhachHang();
         return new BatDongSanListItemResponse(

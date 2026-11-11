@@ -45,6 +45,7 @@ public final class BatDongSanSpecifications {
         };
     }
 
+    /** Thêm điều kiện bằng khi giá trị lọc khác null. */
     private static void addEqual(List<Predicate> predicates, CriteriaBuilder cb, Root<BatDongSan> root,
             String attribute, Object value) {
         if (value != null) {
@@ -52,6 +53,7 @@ public final class BatDongSanSpecifications {
         }
     }
 
+    /** Thêm điều kiện lớn hơn hoặc bằng / nhỏ hơn hoặc bằng cho từng đầu khoảng có giá trị. */
     private static void addRange(List<Predicate> predicates, CriteriaBuilder cb, Root<BatDongSan> root,
             String attribute, BigDecimal from, BigDecimal to) {
         if (from != null) {
@@ -62,6 +64,7 @@ public final class BatDongSanSpecifications {
         }
     }
 
+    /** Escape ký tự đại diện của LIKE (!, %, _) bằng ký tự escape '!'. */
     static String escapeLike(String value) {
         return value
                 .replace(String.valueOf(LIKE_ESCAPE), "" + LIKE_ESCAPE + LIKE_ESCAPE)
