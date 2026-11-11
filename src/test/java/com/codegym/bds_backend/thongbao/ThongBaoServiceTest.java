@@ -68,7 +68,6 @@ class ThongBaoServiceTest {
 
         assertEquals(1, response.content().size());
         assertEquals("Thông báo lễ Quốc khánh", response.content().get(0).tenThongBao());
-        assertEquals("Nguyễn Thành Long", response.content().get(0).nguoiTaoTen());
     }
 
     @Test
@@ -83,7 +82,7 @@ class ThongBaoServiceTest {
 
     @Test
     void findThongBaoById_tonTai_traVeChiTiet() {
-        when(thongBaoRepository.findWithNguoiTaoById(1L)).thenReturn(Optional.of(thongBao));
+        when(thongBaoRepository.findById(1L)).thenReturn(Optional.of(thongBao));
 
         ThongBaoResponse response = thongBaoService.findThongBaoById(1L);
 
@@ -94,7 +93,7 @@ class ThongBaoServiceTest {
 
     @Test
     void findThongBaoById_khongTonTai_nemNotFoundException() {
-        when(thongBaoRepository.findWithNguoiTaoById(999L)).thenReturn(Optional.empty());
+        when(thongBaoRepository.findById(999L)).thenReturn(Optional.empty());
 
         assertThrows(NotFoundException.class, () -> thongBaoService.findThongBaoById(999L));
     }
@@ -120,7 +119,6 @@ class ThongBaoServiceTest {
         assertNotNull(response);
         assertEquals(2L, response.id());
         assertEquals("Thông báo mới", response.tenThongBao());
-        assertEquals(101L, response.nguoiTaoId());
         verify(thongBaoRepository).save(any(ThongBao.class));
     }
 
@@ -143,7 +141,7 @@ class ThongBaoServiceTest {
         UpdateThongBaoRequest request = new UpdateThongBaoRequest(
                 LocalDate.of(2026, 9, 3), "Tiêu đề cập nhật", "Nội dung mới");
 
-        when(thongBaoRepository.findWithNguoiTaoById(1L)).thenReturn(Optional.of(thongBao));
+        when(thongBaoRepository.findById(1L)).thenReturn(Optional.of(thongBao));
         when(thongBaoRepository.save(any(ThongBao.class))).thenReturn(thongBao);
 
         ThongBaoResponse response = thongBaoService.updateThongBao(1L, request);

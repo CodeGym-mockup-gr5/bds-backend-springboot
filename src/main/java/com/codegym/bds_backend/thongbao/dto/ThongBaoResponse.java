@@ -7,18 +7,14 @@ public record ThongBaoResponse(
         Long id,
         LocalDate ngay,
         String tenThongBao,
-        String noiDung,
-        Long nguoiTaoId,
-        String nguoiTaoTen
+        String noiDung
 ) {
     public static ThongBaoResponse fromEntity(ThongBao thongBao) {
         return new ThongBaoResponse(
                 thongBao.getId(),
                 thongBao.getNgay(),
                 thongBao.getTenThongBao(),
-                thongBao.getNoiDung(),
-                thongBao.getNguoiTao() != null ? thongBao.getNguoiTao().getId() : null,
-                thongBao.getNguoiTao() != null ? thongBao.getNguoiTao().getHoTen() : null
+                thongBao.getNoiDung()
         );
     }
 }

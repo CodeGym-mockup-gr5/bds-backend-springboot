@@ -55,9 +55,7 @@ class ThongBaoControllerTest {
                 1L,
                 LocalDate.of(2026, 10, 1),
                 "Lịch nghỉ lễ cuối năm",
-                "Trung tâm thông báo lịch nghỉ lễ...",
-                101L,
-                "Nguyễn Thành Long"
+                "Trung tâm thông báo lịch nghỉ lễ..."
         );
 
         HandlerMethodArgumentResolver authPrincipalResolver = new HandlerMethodArgumentResolver() {
@@ -95,7 +93,8 @@ class ThongBaoControllerTest {
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.data.content[0].id").value(1L))
                 .andExpect(jsonPath("$.data.content[0].tenThongBao").value("Lịch nghỉ lễ cuối năm"))
-                .andExpect(jsonPath("$.data.content[0].nguoiTaoTen").value("Nguyễn Thành Long"));
+                .andExpect(jsonPath("$.data.content[0].nguoiTaoTen").doesNotExist())
+                .andExpect(jsonPath("$.data.content[0].nguoiTaoId").doesNotExist());
     }
 
     @Test
@@ -105,7 +104,9 @@ class ThongBaoControllerTest {
         mockMvc.perform(get("/api/v1/thong-bao/moi-nhat").param("limit", "5"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.data[0].id").value(1L));
+                .andExpect(jsonPath("$.data[0].id").value(1L))
+                .andExpect(jsonPath("$.data[0].nguoiTaoTen").doesNotExist())
+                .andExpect(jsonPath("$.data[0].nguoiTaoId").doesNotExist());
     }
 
     @Test
@@ -116,7 +117,9 @@ class ThongBaoControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.data.id").value(1L))
-                .andExpect(jsonPath("$.data.tenThongBao").value("Lịch nghỉ lễ cuối năm"));
+                .andExpect(jsonPath("$.data.tenThongBao").value("Lịch nghỉ lễ cuối năm"))
+                .andExpect(jsonPath("$.data.nguoiTaoTen").doesNotExist())
+                .andExpect(jsonPath("$.data.nguoiTaoId").doesNotExist());
     }
 
     @Test

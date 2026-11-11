@@ -43,7 +43,7 @@ public class ThongBaoService {
     }
 
     public ThongBaoResponse findThongBaoById(Long id) {
-        ThongBao thongBao = thongBaoRepository.findWithNguoiTaoById(id)
+        ThongBao thongBao = thongBaoRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Không tìm thấy thông báo với mã " + id));
         return ThongBaoResponse.fromEntity(thongBao);
     }
@@ -70,7 +70,7 @@ public class ThongBaoService {
 
     @Transactional
     public ThongBaoResponse updateThongBao(Long id, UpdateThongBaoRequest request) {
-        ThongBao thongBao = thongBaoRepository.findWithNguoiTaoById(id)
+        ThongBao thongBao = thongBaoRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Không tìm thấy thông báo với mã " + id));
 
         thongBao.setTenThongBao(request.tenThongBao().trim());
