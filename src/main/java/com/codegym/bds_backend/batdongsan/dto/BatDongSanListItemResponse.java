@@ -7,7 +7,6 @@ import com.codegym.bds_backend.common.enums.ViTri;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
-/** Một dòng trong danh sách BĐS. Tiền là số nguyên VND; FE tự định dạng và dịch nhãn enum. */
 public record BatDongSanListItemResponse(
         Long id,
         String maBds,

@@ -4,13 +4,11 @@ import com.codegym.bds_backend.batdongsan.dto.BatDongSanListItemResponse;
 import com.codegym.bds_backend.khachhang.KhachHang;
 import org.springframework.stereotype.Component;
 
-/** Chuyển entity sang DTO. Không trả entity ra API (quy ước C.2). */
 @Component
 public class BatDongSanMapper {
 
-    /** Chuyển BĐS sang dòng danh sách; thông tin chủ sở hữu để null nếu không có. */
-    public BatDongSanListItemResponse toListItemResponse(BatDongSan bds, String anhDaiDien) {
-        KhachHang chuSoHuu = bds.getKhachHang();
+    public BatDongSanListItemResponse toListItemResponse(BatDongSan bds, String anhDaiDien, boolean hienChuSoHuu) {
+        KhachHang chuSoHuu = hienChuSoHuu ? bds.getKhachHang() : null;
         return new BatDongSanListItemResponse(
                 bds.getId(),
                 bds.getMaBds(),

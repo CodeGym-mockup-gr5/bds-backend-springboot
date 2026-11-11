@@ -8,7 +8,6 @@ import org.springframework.data.repository.query.Param;
 
 public interface HinhAnhBdsRepository extends JpaRepository<HinhAnhBds, Long> {
 
-    /** Ảnh của nhiều BĐS trong một truy vấn, sắp theo thu_tu để lấy ảnh đại diện. */
     @Query("""
             SELECT h FROM HinhAnhBds h
             WHERE h.batDongSan.id IN :batDongSanIds

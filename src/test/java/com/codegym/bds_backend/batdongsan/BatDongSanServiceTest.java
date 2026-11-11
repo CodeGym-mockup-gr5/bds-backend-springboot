@@ -73,6 +73,23 @@ class BatDongSanServiceTest {
         assertThat(result.totalElements()).isEqualTo(2);
         assertThat(result.content().get(0).anhDaiDien()).isEqualTo("/uploads/bds/301-1.jpg");
         assertThat(result.content().get(1).anhDaiDien()).isNull();
+        assertThat(result.content().get(0).tenChuSoHuu()).isEqualTo("Chủ sở hữu 301");
+    }
+
+    @Test
+    void shouldHideOwnerWhenUserIsNotStaff() {
+        when(currentUser.isAdminOrNhanVien()).thenReturn(false);
+        Page<BatDongSan> page = new PageImpl<>(
+                List.of(batDongSan(304L, TinhTrangBds.CO_SAN)), PageRequest.of(0, 10), 1);
+        when(batDongSanRepository.findAll(ArgumentMatchers.<Specification<BatDongSan>>any(), any(Pageable.class)))
+                .thenReturn(page);
+        when(hinhAnhBdsRepository.findByBatDongSanIds(anyCollection())).thenReturn(List.of());
+
+        BatDongSanListItemResponse item = batDongSanService.searchBatDongSan(emptyRequest()).content().get(0);
+
+        assertThat(item.khachHangId()).isNull();
+        assertThat(item.maKh()).isNull();
+        assertThat(item.tenChuSoHuu()).isNull();
     }
 
     @Test

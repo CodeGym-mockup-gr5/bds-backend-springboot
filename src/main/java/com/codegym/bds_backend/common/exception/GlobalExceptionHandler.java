@@ -33,7 +33,6 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ApiResponse<Void>> handleBodyValidation(MethodArgumentNotValidException e) {
         List<FieldErrorItem> errors = e.getBindingResult().getFieldErrors().stream()
-                // Lỗi ép kiểu (vd viTri=ABC) có thông báo kỹ thuật tiếng Anh, thay bằng câu tiếng Việt
                 .map(f -> new FieldErrorItem(
                         f.getField(), f.isBindingFailure() ? MSG_INVALID_VALUE : f.getDefaultMessage()))
                 .toList();
@@ -41,13 +40,15 @@ public class GlobalExceptionHandler {
         return build(HttpStatus.BAD_REQUEST, message, errors);
     }
 
-    @ExceptionHandler({
-        HandlerMethodValidationException.class,
-        ConstraintViolationException.class,
-        MethodArgumentTypeMismatchException.class
-    })
+    @ExceptionHandler({HandlerMethodValidationException.class, ConstraintViolationException.class})
     public ResponseEntity<ApiResponse<Void>> handleParamValidation(Exception e) {
         return build(HttpStatus.BAD_REQUEST, MSG_INVALID, null);
+    }
+
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public ResponseEntity<ApiResponse<Void>> handleTypeMismatch(MethodArgumentTypeMismatchException e) {
+        List<FieldErrorItem> errors = List.of(new FieldErrorItem(e.getName(), MSG_INVALID_VALUE));
+        return build(HttpStatus.BAD_REQUEST, MSG_INVALID_VALUE, errors);
     }
 
     @ExceptionHandler(HttpMessageNotReadableException.class)

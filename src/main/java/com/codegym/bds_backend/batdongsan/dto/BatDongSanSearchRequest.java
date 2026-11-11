@@ -11,7 +11,6 @@ import jakarta.validation.constraints.PositiveOrZero;
 import jakarta.validation.constraints.Size;
 import java.math.BigDecimal;
 
-/** Tham số lọc của SRS 5.6.1. Mọi tham số đều tùy chọn; diện tích và giá tìm theo khoảng Từ–Đến. */
 public record BatDongSanSearchRequest(
         @Schema(description = "Loại BĐS", example = "DAT")
         LoaiBds loaiBds,
@@ -42,7 +41,7 @@ public record BatDongSanSearchRequest(
         @PositiveOrZero(message = "Giá tiền không hợp lệ")
         BigDecimal giaDen,
 
-        @Schema(description = "Id khách hàng chủ sở hữu (màn Xem danh sách BĐS của khách hàng, SRS 5.5.5)",
+        @Schema(description = "Id khách hàng chủ sở hữu. Chỉ Admin, Nhân viên lọc được",
                 example = "210")
         @Positive(message = "Mã khách hàng không hợp lệ")
         Long khachHangId,

@@ -11,19 +11,15 @@ import java.util.Locale;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.util.StringUtils;
 
-/** Điều kiện lọc động cho danh sách BĐS. Điều kiện nào null thì bỏ qua; không nối chuỗi vào truy vấn. */
 public final class BatDongSanSpecifications {
 
-    // Dùng '!' làm ký tự thoát của LIKE vì MySQL coi '\' trong chuỗi là ký tự escape
-    private static final char LIKE_ESCAPE = '!';
+    private static final char MYSQL_SAFE_LIKE_ESCAPE = '!';
 
     private BatDongSanSpecifications() {
     }
 
-    /**
-     * @param tinhTrang tình trạng đã áp dụng (service ép thành CO_SAN với khách và khách hàng)
-     */
-    public static Specification<BatDongSan> filterBatDongSan(BatDongSanSearchRequest request, TinhTrangBds tinhTrang) {
+    public static Specification<BatDongSan> filterBatDongSan(
+            BatDongSanSearchRequest request, TinhTrangBds tinhTrang, Long khachHangId) {
         return (root, query, cb) -> {
             List<Predicate> predicates = new ArrayList<>();
             addEqual(predicates, cb, root, "loaiBds", request.loaiBds());
@@ -32,20 +28,19 @@ public final class BatDongSanSpecifications {
             addEqual(predicates, cb, root, "tinhTrang", tinhTrang);
             addRange(predicates, cb, root, "dienTich", request.dienTichTu(), request.dienTichDen());
             addRange(predicates, cb, root, "gia", request.giaTu(), request.giaDen());
-            if (request.khachHangId() != null) {
-                predicates.add(cb.equal(root.get("khachHang").get("id"), request.khachHangId()));
+            if (khachHangId != null) {
+                predicates.add(cb.equal(root.get("khachHang").get("id"), khachHangId));
             }
             if (StringUtils.hasText(request.tuKhoa())) {
                 String pattern = "%" + escapeLike(request.tuKhoa().trim().toLowerCase(Locale.ROOT)) + "%";
                 predicates.add(cb.or(
-                        cb.like(cb.lower(root.<String>get("maBds")), pattern, LIKE_ESCAPE),
-                        cb.like(cb.lower(root.<String>get("diaChi")), pattern, LIKE_ESCAPE)));
+                        cb.like(cb.lower(root.<String>get("maBds")), pattern, MYSQL_SAFE_LIKE_ESCAPE),
+                        cb.like(cb.lower(root.<String>get("diaChi")), pattern, MYSQL_SAFE_LIKE_ESCAPE)));
             }
             return cb.and(predicates.toArray(new Predicate[0]));
         };
     }
 
-    /** Thêm điều kiện bằng khi giá trị lọc khác null. */
     private static void addEqual(List<Predicate> predicates, CriteriaBuilder cb, Root<BatDongSan> root,
             String attribute, Object value) {
         if (value != null) {
@@ -53,7 +48,6 @@ public final class BatDongSanSpecifications {
         }
     }
 
-    /** Thêm điều kiện lớn hơn hoặc bằng / nhỏ hơn hoặc bằng cho từng đầu khoảng có giá trị. */
     private static void addRange(List<Predicate> predicates, CriteriaBuilder cb, Root<BatDongSan> root,
             String attribute, BigDecimal from, BigDecimal to) {
         if (from != null) {
@@ -64,11 +58,10 @@ public final class BatDongSanSpecifications {
         }
     }
 
-    /** Escape ký tự đại diện của LIKE (!, %, _) bằng ký tự escape '!'. */
     static String escapeLike(String value) {
         return value
-                .replace(String.valueOf(LIKE_ESCAPE), "" + LIKE_ESCAPE + LIKE_ESCAPE)
-                .replace("%", LIKE_ESCAPE + "%")
-                .replace("_", LIKE_ESCAPE + "_");
+                .replace(String.valueOf(MYSQL_SAFE_LIKE_ESCAPE), "" + MYSQL_SAFE_LIKE_ESCAPE + MYSQL_SAFE_LIKE_ESCAPE)
+                .replace("%", MYSQL_SAFE_LIKE_ESCAPE + "%")
+                .replace("_", MYSQL_SAFE_LIKE_ESCAPE + "_");
     }
 }

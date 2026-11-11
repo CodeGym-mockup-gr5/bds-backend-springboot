@@ -10,7 +10,6 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 public interface BatDongSanRepository
         extends JpaRepository<BatDongSan, Long>, JpaSpecificationExecutor<BatDongSan> {
 
-    /** Tải kèm chủ sở hữu trong cùng truy vấn để tránh N+1 khi hiển thị danh sách. */
     @Override
     @EntityGraph(attributePaths = "khachHang")
     Page<BatDongSan> findAll(Specification<BatDongSan> spec, Pageable pageable);

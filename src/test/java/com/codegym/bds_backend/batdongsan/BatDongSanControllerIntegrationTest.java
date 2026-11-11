@@ -17,10 +17,6 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.WebApplicationContext;
 
-/**
- * Chạy trên database Docker của máy phát triển (localhost:3307) đã nạp dữ liệu mẫu V2, giống test contextLoads.
- * Trước khi chạy: cd database && docker compose up -d. Test chỉ đọc, không sửa dữ liệu.
- */
 @SpringBootTest
 class BatDongSanControllerIntegrationTest {
 
@@ -49,6 +45,16 @@ class BatDongSanControllerIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.totalElements", is(8)))
                 .andExpect(jsonPath("$.data.content[*].tinhTrang", everyItem(is("CO_SAN"))));
+    }
+
+    @Test
+    void shouldHideOwnerAndIgnoreOwnerFilterWhenGuestSearches() throws Exception {
+        mockMvc.perform(get(URL).param("khachHangId", "210"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.totalElements", is(8)))
+                .andExpect(jsonPath("$.data.content[*].khachHangId", everyItem(nullValue())))
+                .andExpect(jsonPath("$.data.content[*].maKh", everyItem(nullValue())))
+                .andExpect(jsonPath("$.data.content[*].tenChuSoHuu", everyItem(nullValue())));
     }
 
     @Test
@@ -118,6 +124,8 @@ class BatDongSanControllerIntegrationTest {
     void shouldReturnBadRequestWithFieldWhenEnumValueIsInvalid() throws Exception {
         mockMvc.perform(get(URL).param("viTri", "ABC"))
                 .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.success", is(false)))
+                .andExpect(jsonPath("$.message", is("Giá trị không hợp lệ")))
                 .andExpect(jsonPath("$.errors[0].field", is("viTri")))
                 .andExpect(jsonPath("$.errors[0].message", is("Giá trị không hợp lệ")));
     }

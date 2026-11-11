@@ -3,7 +3,6 @@ package com.codegym.bds_backend.batdongsan;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.bind.DefaultValue;
 
-/** Cấu hình app.bat-dong-san.* trong application.yml (quy ước không hard-code giá trị cấu hình). */
 @ConfigurationProperties(prefix = "app.bat-dong-san")
 public record BatDongSanProperties(
         @DefaultValue("10") int defaultPageSize,
