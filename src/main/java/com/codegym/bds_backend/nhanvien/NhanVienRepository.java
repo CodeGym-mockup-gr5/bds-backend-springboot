@@ -1,5 +1,6 @@
 package com.codegym.bds_backend.nhanvien;
 
+import java.util.List;
 import java.util.Optional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -29,6 +30,8 @@ public interface NhanVienRepository extends JpaRepository<NhanVien, Long> {
             @Param("chucVu") ChucVu chucVu,
             @Param("email") String email,
             Pageable pageable);
+
+    List<NhanVien> findAllByLaAdminTrue();
 
     @Query("select t.nhanVien from TaiKhoan t where t.id = :taiKhoanId and t.nhanVien is not null")
     Optional<NhanVien> findByTaiKhoanId(@Param("taiKhoanId") Long taiKhoanId);
