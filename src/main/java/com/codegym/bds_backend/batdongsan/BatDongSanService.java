@@ -1,9 +1,11 @@
 package com.codegym.bds_backend.batdongsan;
 
 import com.codegym.bds_backend.auth.CurrentUser;
+import com.codegym.bds_backend.batdongsan.dto.BatDongSanDetailResponse;
 import com.codegym.bds_backend.batdongsan.dto.BatDongSanListItemResponse;
 import com.codegym.bds_backend.batdongsan.dto.BatDongSanSearchRequest;
 import com.codegym.bds_backend.common.exception.BadRequestException;
+import com.codegym.bds_backend.common.exception.NotFoundException;
 import com.codegym.bds_backend.common.response.PageResponse;
 import java.math.BigDecimal;
 import java.util.HashMap;
@@ -27,6 +29,7 @@ public class BatDongSanService {
     static final String MSG_KHOANG_DIEN_TICH = "Khoảng diện tích không hợp lệ";
     static final String MSG_KHOANG_GIA = "Khoảng giá không hợp lệ";
     static final String MSG_SAP_XEP = "Tiêu chí sắp xếp không hợp lệ";
+    static final String MSG_KHONG_TIM_THAY = "Không tìm thấy bất động sản";
 
     private static final Set<String> SORTABLE_FIELDS = Set.of("ngayDang", "gia", "dienTich", "giaM2", "id");
     private static final String DEFAULT_SORT_FIELD = "ngayDang";
@@ -54,6 +57,14 @@ public class BatDongSanService {
 
         return PageResponse.of(page.map(bds ->
                 batDongSanMapper.toListItemResponse(bds, anhDaiDien.get(bds.getId()), laNoiBo)));
+    }
+
+    public BatDongSanDetailResponse getChiTietBatDongSan(Long id) {
+        boolean laNoiBo = currentUser.isAdminOrNhanVien();
+        BatDongSan bds = batDongSanRepository.findWithChiTietById(id)
+                .filter(found -> laNoiBo || found.getTinhTrang() == TinhTrangBds.CO_SAN)
+                .orElseThrow(() -> new NotFoundException(MSG_KHONG_TIM_THAY));
+        return batDongSanMapper.toDetailResponse(bds, laNoiBo);
     }
 
     private Map<Long, String> findAnhDaiDien(List<BatDongSan> danhSach) {
