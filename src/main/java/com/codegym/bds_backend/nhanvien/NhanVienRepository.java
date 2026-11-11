@@ -1,5 +1,6 @@
 package com.codegym.bds_backend.nhanvien;
 
+import java.util.List;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -14,6 +15,8 @@ public interface NhanVienRepository extends JpaRepository<NhanVien, Long> {
     boolean existsByEmailIgnoreCaseAndIdNot(@Param("email") String email, @Param("id") Long id);
 
     boolean existsByLaAdminTrue();
+
+    List<NhanVien> findAllByLaAdminTrue();
 
     @Query("select t.nhanVien from TaiKhoan t where t.id = :taiKhoanId and t.nhanVien is not null")
     Optional<NhanVien> findByTaiKhoanId(@Param("taiKhoanId") Long taiKhoanId);
