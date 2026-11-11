@@ -19,11 +19,9 @@ import org.springframework.web.method.annotation.HandlerMethodValidationExceptio
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
-/** Nơi duy nhất chuyển exception thành response (quy ước mục B.10). */
 @Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
-
     private static final String MSG_INVALID = "Dữ liệu không hợp lệ";
     private static final String MSG_INVALID_VALUE = "Giá trị không hợp lệ";
 

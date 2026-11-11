@@ -1,6 +1,5 @@
-package com.codegym.bds_backend.common.enums;
+package com.codegym.bds_backend.batdongsan;
 
-/** Hướng bất động sản. */
 public enum Huong {
     DONG,
     TAY,

@@ -3,7 +3,6 @@ package com.codegym.bds_backend.batdongsan;
 import com.codegym.bds_backend.auth.CurrentUser;
 import com.codegym.bds_backend.batdongsan.dto.BatDongSanListItemResponse;
 import com.codegym.bds_backend.batdongsan.dto.BatDongSanSearchRequest;
-import com.codegym.bds_backend.common.enums.TinhTrangBds;
 import com.codegym.bds_backend.common.exception.BadRequestException;
 import com.codegym.bds_backend.common.response.PageResponse;
 import java.math.BigDecimal;

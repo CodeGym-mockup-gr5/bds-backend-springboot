@@ -9,7 +9,6 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 @RequiredArgsConstructor
 public class CloudinaryConfig {
-
     private final AppProperties props;
 
     @Bean

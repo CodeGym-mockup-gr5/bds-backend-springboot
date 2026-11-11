@@ -10,15 +10,15 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-/** Bảng hinh_anh_bds. thu_tu nhỏ nhất là ảnh đại diện. */
 @Entity
 @Table(name = "hinh_anh_bds")
 @Getter
 @Setter
+@NoArgsConstructor
 public class HinhAnhBds {
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;

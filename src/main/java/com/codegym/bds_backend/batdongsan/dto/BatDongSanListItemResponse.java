@@ -1,8 +1,8 @@
 package com.codegym.bds_backend.batdongsan.dto;
 
-import com.codegym.bds_backend.common.enums.Huong;
+import com.codegym.bds_backend.batdongsan.Huong;
+import com.codegym.bds_backend.batdongsan.TinhTrangBds;
 import com.codegym.bds_backend.common.enums.LoaiBds;
-import com.codegym.bds_backend.common.enums.TinhTrangBds;
 import com.codegym.bds_backend.common.enums.ViTri;
 import java.math.BigDecimal;
 import java.time.LocalDate;

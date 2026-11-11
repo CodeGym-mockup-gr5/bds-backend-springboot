@@ -1,7 +1,6 @@
 package com.codegym.bds_backend.batdongsan;
 
 import com.codegym.bds_backend.batdongsan.dto.BatDongSanSearchRequest;
-import com.codegym.bds_backend.common.enums.TinhTrangBds;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.Predicate;
 import jakarta.persistence.criteria.Root;

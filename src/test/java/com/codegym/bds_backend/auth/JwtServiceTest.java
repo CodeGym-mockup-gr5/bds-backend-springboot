@@ -9,15 +9,15 @@ import java.util.List;
 import org.junit.jupiter.api.Test;
 
 class JwtServiceTest {
-
     private static final String SECRET = "test-secret-test-secret-test-secret-1234";
 
     private static AppProperties props(String secret, long minutes) {
         return new AppProperties(
                 new AppProperties.Security(5, 24, 30, new AppProperties.Jwt(secret, minutes)),
                 new AppProperties.Cors(List.of("http://localhost:5173")),
-                new AppProperties.Mail("no-reply@test.local"),
-                new AppProperties.Cloudinary("", "", ""));
+                new AppProperties.Mail("no-reply@test.local", "http://localhost:5173"),
+                new AppProperties.Cloudinary("", "", ""),
+                new AppProperties.BootstrapAdmin("admin", "Quản trị viên", "admin@test.local", "0900000000"));
     }
 
     @Test
@@ -47,6 +47,15 @@ class JwtServiceTest {
         String token = service.generateToken(new JwtPrincipal(1L, "admin", List.of("ROLE_ADMIN")));
 
         assertTrue(service.parse(token).isEmpty());
+    }
+
+    @Test
+    void shouldExtractExpirationSuccessfully() {
+        JwtService service = new JwtService(props(SECRET, 60));
+        String token = service.generateToken(new JwtPrincipal(1L, "user01", List.of("ROLE_KHACH_HANG")));
+
+        assertTrue(service.extractExpiration(token).isPresent());
+        assertTrue(service.extractExpiration("invalid-token").isEmpty());
     }
 
     @Test

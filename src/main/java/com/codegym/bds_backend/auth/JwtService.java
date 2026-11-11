@@ -13,10 +13,8 @@ import java.util.Optional;
 import javax.crypto.SecretKey;
 import org.springframework.stereotype.Service;
 
-/** Tạo và đọc JWT. Khóa và thời hạn lấy từ application.yml (app.security.jwt). */
 @Service
 public class JwtService {
-
     private final SecretKey key;
     private final long expirationMillis;
 
@@ -26,8 +24,7 @@ public class JwtService {
             throw new IllegalStateException("JWT_SECRET phải dài ít nhất 32 ký tự");
         }
         this.key = Keys.hmacShaKeyFor(secret);
-        this.expirationMillis =
-                Duration.ofMinutes(props.security().jwt().expirationMinutes()).toMillis();
+        this.expirationMillis = Duration.ofMinutes(props.security().jwt().expirationMinutes()).toMillis();
     }
 
     public String generateToken(JwtPrincipal principal) {
@@ -42,16 +39,22 @@ public class JwtService {
                 .compact();
     }
 
-    /** Trả rỗng nếu token sai, hết hạn hoặc bị sửa. */
     public Optional<JwtPrincipal> parse(String token) {
         try {
-            Claims claims =
-                    Jwts.parser().verifyWith(key).build().parseSignedClaims(token).getPayload();
+            Claims claims = Jwts.parser().verifyWith(key).build().parseSignedClaims(token).getPayload();
             List<?> rawRoles = claims.get("roles", List.class);
-            List<String> roles =
-                    rawRoles == null ? List.of() : rawRoles.stream().map(String::valueOf).toList();
+            List<String> roles = rawRoles == null ? List.of() : rawRoles.stream().map(String::valueOf).toList();
             Number uid = claims.get("uid", Number.class);
             return Optional.of(new JwtPrincipal(uid == null ? null : uid.longValue(), claims.getSubject(), roles));
+        } catch (JwtException | IllegalArgumentException e) {
+            return Optional.empty();
+        }
+    }
+
+    public Optional<Date> extractExpiration(String token) {
+        try {
+            Claims claims = Jwts.parser().verifyWith(key).build().parseSignedClaims(token).getPayload();
+            return Optional.ofNullable(claims.getExpiration());
         } catch (JwtException | IllegalArgumentException e) {
             return Optional.empty();
         }
