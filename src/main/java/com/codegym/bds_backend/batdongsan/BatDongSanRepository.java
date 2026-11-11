@@ -13,4 +13,6 @@ public interface BatDongSanRepository
     @Override
     @EntityGraph(attributePaths = "khachHang")
     Page<BatDongSan> findAll(Specification<BatDongSan> spec, Pageable pageable);
+
+    Page<BatDongSan> findAllByOrderByNgayDangDescIdDesc(Pageable pageable);
 }
