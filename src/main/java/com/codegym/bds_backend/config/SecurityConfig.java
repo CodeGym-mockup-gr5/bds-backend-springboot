@@ -2,6 +2,7 @@ package com.codegym.bds_backend.config;
 
 import com.codegym.bds_backend.auth.JwtAuthenticationFilter;
 import com.codegym.bds_backend.auth.JwtService;
+import com.codegym.bds_backend.auth.TokenBlacklistService;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -31,6 +32,7 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 public class SecurityConfig {
     private final AppProperties props;
     private final JwtService jwtService;
+    private final TokenBlacklistService tokenBlacklistService;
 
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -52,13 +54,15 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 
-                        .requestMatchers("/api/v1/auth/me").authenticated()
+                        .requestMatchers("/api/v1/auth/me", "/api/v1/auth/logout", "/api/v1/auth/change-password")
+                                .authenticated()
                         .requestMatchers("/api/v1/auth/**").permitAll()
                         .requestMatchers("/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**").permitAll()
 
                         .requestMatchers("/api/v1/bat-dong-san/moi-dang").hasRole("ADMIN")
 
                         .requestMatchers(HttpMethod.GET, "/api/v1/bat-dong-san/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/thong-bao/**").permitAll()
                         .anyRequest().authenticated())
                 .exceptionHandling(ex -> ex
                         .authenticationEntryPoint((req, res, e) ->
@@ -66,7 +70,7 @@ public class SecurityConfig {
                         .accessDeniedHandler((req, res, e) -> writeError(
                                 res, HttpServletResponse.SC_FORBIDDEN, "Bạn không có quyền thực hiện chức năng này")))
 
-                .addFilterBefore(new JwtAuthenticationFilter(jwtService), UsernamePasswordAuthenticationFilter.class);
+                .addFilterBefore(new JwtAuthenticationFilter(jwtService, tokenBlacklistService), UsernamePasswordAuthenticationFilter.class);
         return http.build();
     }
 
