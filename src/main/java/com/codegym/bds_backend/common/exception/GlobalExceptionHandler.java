@@ -25,6 +25,7 @@ import org.springframework.web.servlet.resource.NoResourceFoundException;
 public class GlobalExceptionHandler {
 
     private static final String MSG_INVALID = "Dữ liệu không hợp lệ";
+    private static final String MSG_INVALID_VALUE = "Giá trị không hợp lệ";
 
     @ExceptionHandler(BusinessException.class)
     public ResponseEntity<ApiResponse<Void>> handleBusiness(BusinessException e) {
@@ -34,7 +35,9 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ApiResponse<Void>> handleBodyValidation(MethodArgumentNotValidException e) {
         List<FieldErrorItem> errors = e.getBindingResult().getFieldErrors().stream()
-                .map(f -> new FieldErrorItem(f.getField(), f.getDefaultMessage()))
+                // Lỗi ép kiểu (vd viTri=ABC) có thông báo kỹ thuật tiếng Anh, thay bằng câu tiếng Việt
+                .map(f -> new FieldErrorItem(
+                        f.getField(), f.isBindingFailure() ? MSG_INVALID_VALUE : f.getDefaultMessage()))
                 .toList();
         String message = errors.isEmpty() ? MSG_INVALID : errors.get(0).message();
         return build(HttpStatus.BAD_REQUEST, message, errors);
