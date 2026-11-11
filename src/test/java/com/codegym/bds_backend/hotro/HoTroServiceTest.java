@@ -1,72 +1,47 @@
 package com.codegym.bds_backend.hotro;
 
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
-import com.codegym.bds_backend.config.AppProperties;
-import com.codegym.bds_backend.hotro.dto.YeuCauHoTroRequest;
+import com.codegym.bds_backend.common.exception.NotFoundException;
+import com.codegym.bds_backend.hotro.dto.HuongDanResponse;
+import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.mail.MailSendException;
-import org.springframework.mail.SimpleMailMessage;
-import org.springframework.mail.javamail.JavaMailSender;
 
-@ExtendWith(MockitoExtension.class)
 class HoTroServiceTest {
-    @Mock
-    private JavaMailSender mailSender;
-
-    @Mock
-    private AppProperties props;
-
-    @InjectMocks
     private HoTroService hoTroService;
-
-    private YeuCauHoTroRequest request;
 
     @BeforeEach
     void setUp() {
-        request = new YeuCauHoTroRequest(
-                "Trần Văn Hùng",
-                "0912345678",
-                "hung.tv@example.com",
-                "Tôi cần tư vấn mua đất nền khu vực quận Cẩm Lệ"
-        );
+        hoTroService = new HoTroService();
     }
 
     @Test
-    void guiYeuCauHoTro_thanhCong_guiMailAdmin() {
-        AppProperties.BootstrapAdmin admin = new AppProperties.BootstrapAdmin(
-                "admin", "Quản trị viên", "admin@realia.local", "0900000000");
-        AppProperties.Mail mail = new AppProperties.Mail(
-                "no-reply@realia.local", "http://localhost:5173");
+    void findDanhSachHuongDan_traVeDuBonMucHuongDanTheoSRS() {
+        List<HuongDanResponse> danhSach = hoTroService.findDanhSachHuongDan();
 
-        when(props.bootstrapAdmin()).thenReturn(admin);
-        when(props.mail()).thenReturn(mail);
-
-        assertDoesNotThrow(() -> hoTroService.guiYeuCauHoTro(request));
-        verify(mailSender).send(any(SimpleMailMessage.class));
+        assertNotNull(danhSach);
+        assertEquals(4, danhSach.size());
+        assertEquals("Hướng dẫn sử dụng tài khoản", danhSach.get(0).tieuDe());
+        assertEquals("Hướng dẫn sử dụng lập hợp đồng", danhSach.get(1).tieuDe());
+        assertEquals("Hướng dẫn đổi mật khẩu", danhSach.get(2).tieuDe());
+        assertEquals("Hướng dẫn giao dịch với khách hàng", danhSach.get(3).tieuDe());
     }
 
     @Test
-    void guiYeuCauHoTro_loiGuiMail_vanKhongNemException() {
-        AppProperties.BootstrapAdmin admin = new AppProperties.BootstrapAdmin(
-                "admin", "Quản trị viên", "admin@realia.local", "0900000000");
-        AppProperties.Mail mail = new AppProperties.Mail(
-                "no-reply@realia.local", "http://localhost:5173");
+    void findChiTietHuongDan_tonTai_traVeNoiDungChiTiet() {
+        HuongDanResponse response = hoTroService.findChiTietHuongDan("tai-khoan");
 
-        when(props.bootstrapAdmin()).thenReturn(admin);
-        when(props.mail()).thenReturn(mail);
-        doThrow(new MailSendException("SMTP error")).when(mailSender).send(any(SimpleMailMessage.class));
+        assertNotNull(response);
+        assertEquals("tai-khoan", response.maHuongDan());
+        assertEquals("Hướng dẫn sử dụng tài khoản", response.tieuDe());
+        assertNotNull(response.noiDung());
+    }
 
-        assertDoesNotThrow(() -> hoTroService.guiYeuCauHoTro(request));
-        verify(mailSender).send(any(SimpleMailMessage.class));
+    @Test
+    void findChiTietHuongDan_khongTonTai_nemNotFoundException() {
+        assertThrows(NotFoundException.class, () -> hoTroService.findChiTietHuongDan("khong-ton-tai"));
     }
 }

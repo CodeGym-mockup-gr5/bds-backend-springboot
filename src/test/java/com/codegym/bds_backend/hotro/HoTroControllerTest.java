@@ -1,20 +1,20 @@
 package com.codegym.bds_backend.hotro;
 
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.doNothing;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.codegym.bds_backend.common.exception.GlobalExceptionHandler;
-import com.codegym.bds_backend.hotro.dto.YeuCauHoTroRequest;
+import com.codegym.bds_backend.common.exception.NotFoundException;
+import com.codegym.bds_backend.hotro.dto.HuongDanResponse;
+import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
@@ -28,89 +28,54 @@ class HoTroControllerTest {
     @InjectMocks
     private HoTroController hoTroController;
 
+    private HuongDanResponse sampleHuongDan;
+
     @BeforeEach
     void setUp() {
         mockMvc = MockMvcBuilders.standaloneSetup(hoTroController)
                 .setControllerAdvice(new GlobalExceptionHandler())
                 .build();
+
+        sampleHuongDan = new HuongDanResponse(
+                "tai-khoan",
+                "Hướng dẫn sử dụng tài khoản",
+                "Cho phép người dùng click vào để đọc hướng dẫn sử dụng tài khoản",
+                "Nội dung hướng dẫn chi tiết",
+                "/huong-dan/tai-khoan"
+        );
     }
 
     @Test
-    void guiYeuCauHoTro_hopLe_traVe200() throws Exception {
-        doNothing().when(hoTroService).guiYeuCauHoTro(any(YeuCauHoTroRequest.class));
+    void findDanhSachHuongDan_traVe200VaDanhSach() throws Exception {
+        when(hoTroService.findDanhSachHuongDan()).thenReturn(List.of(sampleHuongDan));
 
-        String json = """
-                {
-                    "hoTen": "Trần Văn Hùng",
-                    "soDienThoai": "0912345678",
-                    "email": "hung.tv@example.com",
-                    "noiDung": "Tôi cần tư vấn mua đất nền"
-                }
-                """;
-
-        mockMvc.perform(post("/api/v1/ho-tro")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(json))
+        mockMvc.perform(get("/api/v1/ho-tro"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.message")
-                        .value("Gửi yêu cầu hỗ trợ thành công. Chúng tôi sẽ liên hệ lại với bạn sớm nhất!"));
+                .andExpect(jsonPath("$.data[0].maHuongDan").value("tai-khoan"))
+                .andExpect(jsonPath("$.data[0].tieuDe").value("Hướng dẫn sử dụng tài khoản"))
+                .andExpect(jsonPath("$.data[0].duongDan").value("/huong-dan/tai-khoan"));
     }
 
     @Test
-    void guiYeuCauHoTro_sdtSaiDinhDang_traVe400() throws Exception {
-        String json = """
-                {
-                    "hoTen": "Trần Văn Hùng",
-                    "soDienThoai": "012345",
-                    "email": "hung.tv@example.com",
-                    "noiDung": "Tôi cần tư vấn mua đất nền"
-                }
-                """;
+    void findChiTietHuongDan_tonTai_traVe200() throws Exception {
+        when(hoTroService.findChiTietHuongDan("tai-khoan")).thenReturn(sampleHuongDan);
 
-        mockMvc.perform(post("/api/v1/ho-tro")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(json))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.errors[0].field").value("soDienThoai"));
+        mockMvc.perform(get("/api/v1/ho-tro/tai-khoan"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.maHuongDan").value("tai-khoan"))
+                .andExpect(jsonPath("$.data.tieuDe").value("Hướng dẫn sử dụng tài khoản"));
     }
 
     @Test
-    void guiYeuCauHoTro_emailSaiDinhDang_traVe400() throws Exception {
-        String json = """
-                {
-                    "hoTen": "Trần Văn Hùng",
-                    "soDienThoai": "0912345678",
-                    "email": "hung-khong-dung-dinh-dang",
-                    "noiDung": "Tôi cần tư vấn mua đất nền"
-                }
-                """;
+    void findChiTietHuongDan_khongTonTai_traVe404() throws Exception {
+        when(hoTroService.findChiTietHuongDan("khong-ton-tai"))
+                .thenThrow(new NotFoundException("Không tìm thấy tài liệu hướng dẫn"));
 
-        mockMvc.perform(post("/api/v1/ho-tro")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(json))
-                .andExpect(status().isBadRequest())
+        mockMvc.perform(get("/api/v1/ho-tro/khong-ton-tai"))
+                .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.errors[0].field").value("email"));
-    }
-
-    @Test
-    void guiYeuCauHoTro_deTrong_traVe400() throws Exception {
-        String json = """
-                {
-                    "hoTen": "",
-                    "soDienThoai": "",
-                    "email": "",
-                    "noiDung": ""
-                }
-                """;
-
-        mockMvc.perform(post("/api/v1/ho-tro")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(json))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.errors").isArray());
+                .andExpect(jsonPath("$.message").value("Không tìm thấy tài liệu hướng dẫn"));
     }
 }
