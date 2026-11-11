@@ -26,4 +26,3 @@ public record BatDongSanResponse(
         String ghiChu,
         List<HinhAnhBdsDto> danhSachHinhAnh
 ) {}
-

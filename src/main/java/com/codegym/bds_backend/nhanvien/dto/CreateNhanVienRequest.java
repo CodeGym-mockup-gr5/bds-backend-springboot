@@ -45,4 +45,3 @@ public record CreateNhanVienRequest(
                 message = "Tên đăng nhập chỉ gồm chữ, số, dấu chấm, gạch ngang, gạch dưới")
         String tenDangNhap) {
 }
-

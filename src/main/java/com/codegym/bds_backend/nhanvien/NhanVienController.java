@@ -5,6 +5,7 @@ import com.codegym.bds_backend.common.response.ApiResponse;
 import com.codegym.bds_backend.common.response.PageResponse;
 import com.codegym.bds_backend.nhanvien.dto.CreateNhanVienRequest;
 import com.codegym.bds_backend.nhanvien.dto.NhanVienResponse;
+import com.codegym.bds_backend.nhanvien.dto.UpdateNhanVienRequest;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -20,6 +21,7 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -63,6 +65,15 @@ public class NhanVienController {
         NhanVienResponse response = nhanVienService.createNhanVien(request);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.ok(response, "Thêm nhân viên thành công"));
+    }
+
+    @PutMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Cập nhật thông tin nhân viên")
+    public ApiResponse<NhanVienResponse> putCapNhatNhanVien(
+            @PathVariable Long id,
+            @Valid @RequestBody UpdateNhanVienRequest request) {
+        return ApiResponse.ok(nhanVienService.updateNhanVien(id, request), "Cập nhật thông tin nhân viên thành công");
     }
 
     @DeleteMapping("/{id}")

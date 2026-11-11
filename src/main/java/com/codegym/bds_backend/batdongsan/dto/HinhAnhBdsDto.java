@@ -9,4 +9,3 @@ public record HinhAnhBdsDto(
         String duongDan,
         int thuTu
 ) {}
-
