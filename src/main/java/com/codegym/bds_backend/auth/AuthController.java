@@ -1,5 +1,6 @@
 package com.codegym.bds_backend.auth;
 
+import com.codegym.bds_backend.auth.dto.ChangePasswordRequest;
 import com.codegym.bds_backend.auth.dto.ForgotPasswordRequest;
 import com.codegym.bds_backend.auth.dto.LoginRequest;
 import com.codegym.bds_backend.auth.dto.LoginResponse;
@@ -70,5 +71,15 @@ public class AuthController {
     @Operation(summary = "Lấy thông tin tài khoản đang đăng nhập")
     public ApiResponse<ThongTinTaiKhoan> me(@AuthenticationPrincipal JwtPrincipal principal) {
         return ApiResponse.ok(authService.findThongTinTaiKhoan(principal.userId()));
+    }
+
+    @PostMapping("/change-password")
+    @PreAuthorize("isAuthenticated()")
+    @Operation(summary = "Đổi mật khẩu tài khoản đang đăng nhập")
+    public ApiResponse<Void> changePassword(
+            @AuthenticationPrincipal JwtPrincipal principal,
+            @Valid @RequestBody ChangePasswordRequest request) {
+        authService.changePasswordTaiKhoan(principal.userId(), request);
+        return ApiResponse.ok(null, "Đổi mật khẩu thành công");
     }
 }
