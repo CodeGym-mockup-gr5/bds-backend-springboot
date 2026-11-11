@@ -23,6 +23,7 @@ import org.springframework.web.servlet.resource.NoResourceFoundException;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
     private static final String MSG_INVALID = "Dữ liệu không hợp lệ";
+    private static final String MSG_INVALID_VALUE = "Giá trị không hợp lệ";
 
     @ExceptionHandler(BusinessException.class)
     public ResponseEntity<ApiResponse<Void>> handleBusiness(BusinessException e) {
@@ -32,19 +33,22 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ApiResponse<Void>> handleBodyValidation(MethodArgumentNotValidException e) {
         List<FieldErrorItem> errors = e.getBindingResult().getFieldErrors().stream()
-                .map(f -> new FieldErrorItem(f.getField(), f.getDefaultMessage()))
+                .map(f -> new FieldErrorItem(
+                        f.getField(), f.isBindingFailure() ? MSG_INVALID_VALUE : f.getDefaultMessage()))
                 .toList();
         String message = errors.isEmpty() ? MSG_INVALID : errors.get(0).message();
         return build(HttpStatus.BAD_REQUEST, message, errors);
     }
 
-    @ExceptionHandler({
-        HandlerMethodValidationException.class,
-        ConstraintViolationException.class,
-        MethodArgumentTypeMismatchException.class
-    })
+    @ExceptionHandler({HandlerMethodValidationException.class, ConstraintViolationException.class})
     public ResponseEntity<ApiResponse<Void>> handleParamValidation(Exception e) {
         return build(HttpStatus.BAD_REQUEST, MSG_INVALID, null);
+    }
+
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public ResponseEntity<ApiResponse<Void>> handleTypeMismatch(MethodArgumentTypeMismatchException e) {
+        List<FieldErrorItem> errors = List.of(new FieldErrorItem(e.getName(), MSG_INVALID_VALUE));
+        return build(HttpStatus.BAD_REQUEST, MSG_INVALID_VALUE, errors);
     }
 
     @ExceptionHandler(HttpMessageNotReadableException.class)

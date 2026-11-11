@@ -50,6 +50,15 @@ class JwtServiceTest {
     }
 
     @Test
+    void shouldExtractExpirationSuccessfully() {
+        JwtService service = new JwtService(props(SECRET, 60));
+        String token = service.generateToken(new JwtPrincipal(1L, "user01", List.of("ROLE_KHACH_HANG")));
+
+        assertTrue(service.extractExpiration(token).isPresent());
+        assertTrue(service.extractExpiration("invalid-token").isEmpty());
+    }
+
+    @Test
     void shouldRejectShortSecret() {
         assertThrows(IllegalStateException.class, () -> new JwtService(props("ngan", 60)));
     }

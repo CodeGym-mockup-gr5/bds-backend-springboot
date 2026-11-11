@@ -1,5 +1,6 @@
 package com.codegym.bds_backend.auth;
 
+import com.codegym.bds_backend.auth.dto.ChangePasswordRequest;
 import com.codegym.bds_backend.auth.dto.ForgotPasswordRequest;
 import com.codegym.bds_backend.auth.dto.LoginRequest;
 import com.codegym.bds_backend.auth.dto.LoginResponse;
@@ -11,12 +12,15 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -31,6 +35,15 @@ public class AuthController {
     @Operation(summary = "Đăng nhập bằng tên đăng nhập và mật khẩu, trả về JWT")
     public ApiResponse<LoginResponse> login(@Valid @RequestBody LoginRequest request) {
         return ApiResponse.ok(authService.loginTaiKhoan(request), "Đăng nhập thành công");
+    }
+
+    @PostMapping("/logout")
+    @PreAuthorize("isAuthenticated()")
+    @Operation(summary = "Đăng xuất tài khoản, thu hồi JWT token và xóa phiên làm việc")
+    public ApiResponse<Void> logout(
+            @RequestHeader(name = HttpHeaders.AUTHORIZATION, required = false) String authHeader) {
+        authService.logoutTaiKhoan(authHeader);
+        return ApiResponse.ok(null, "Đăng xuất thành công");
     }
 
     @PostMapping("/register")
@@ -58,5 +71,15 @@ public class AuthController {
     @Operation(summary = "Lấy thông tin tài khoản đang đăng nhập")
     public ApiResponse<ThongTinTaiKhoan> me(@AuthenticationPrincipal JwtPrincipal principal) {
         return ApiResponse.ok(authService.findThongTinTaiKhoan(principal.userId()));
+    }
+
+    @PostMapping("/change-password")
+    @PreAuthorize("isAuthenticated()")
+    @Operation(summary = "Đổi mật khẩu tài khoản đang đăng nhập")
+    public ApiResponse<Void> changePassword(
+            @AuthenticationPrincipal JwtPrincipal principal,
+            @Valid @RequestBody ChangePasswordRequest request) {
+        authService.changePasswordTaiKhoan(principal.userId(), request);
+        return ApiResponse.ok(null, "Đổi mật khẩu thành công");
     }
 }

@@ -1,5 +1,6 @@
 package com.codegym.bds_backend.auth;
 
+import com.codegym.bds_backend.auth.dto.ChangePasswordRequest;
 import com.codegym.bds_backend.auth.dto.ForgotPasswordRequest;
 import com.codegym.bds_backend.auth.dto.LoginRequest;
 import com.codegym.bds_backend.auth.dto.LoginResponse;
@@ -7,6 +8,7 @@ import com.codegym.bds_backend.auth.dto.RegisterRequest;
 import com.codegym.bds_backend.auth.dto.SetPasswordRequest;
 import com.codegym.bds_backend.auth.dto.ThongTinTaiKhoan;
 import com.codegym.bds_backend.common.enums.VaiTro;
+import com.codegym.bds_backend.common.exception.BadRequestException;
 import com.codegym.bds_backend.common.exception.BusinessException;
 import com.codegym.bds_backend.common.exception.NotFoundException;
 import com.codegym.bds_backend.common.util.MaHienThi;
@@ -19,6 +21,7 @@ import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -38,6 +41,7 @@ public class AuthService {
     private final KhachHangRepository khachHangRepository;
     private final NhanVienRepository nhanVienRepository;
     private final TokenXacThucService tokenXacThucService;
+    private final TokenBlacklistService tokenBlacklistService;
     private final MailService mailService;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
@@ -68,6 +72,16 @@ public class AuthService {
         String token = jwtService.generateToken(
                 new JwtPrincipal(taiKhoan.getId(), taiKhoan.getTenDangNhap(), thongTin.vaiTro()));
         return new LoginResponse(token, thongTin);
+    }
+
+    public void logoutTaiKhoan(String authHeader) {
+        if (authHeader != null && authHeader.startsWith("Bearer ")) {
+            String token = authHeader.substring(7).trim();
+            jwtService.extractExpiration(token).ifPresent(expiresAt ->
+                    tokenBlacklistService.revokeToken(token, expiresAt));
+        }
+        SecurityContextHolder.clearContext();
+        log.info("Người dùng đã đăng xuất thành công");
     }
 
     @Transactional
@@ -120,6 +134,31 @@ public class AuthService {
         taiKhoan.setMatKhauHash(passwordEncoder.encode(request.matKhau()));
         taiKhoan.setSoLanDangNhapSai(0);
         taiKhoan.setBiKhoa(false);
+    }
+
+    @Transactional
+    public void changePasswordTaiKhoan(Long taiKhoanId, ChangePasswordRequest request) {
+        TaiKhoan taiKhoan = taiKhoanRepository
+                .findById(taiKhoanId)
+                .filter(TaiKhoan::chuSoHuuConHieuLuc)
+                .orElseThrow(() -> new NotFoundException("Không tìm thấy tài khoản"));
+
+        if (!request.matKhauMoi().equals(request.xacNhanMatKhau())) {
+            throw new BadRequestException("Mật khẩu mới phải từ 6 đến 32 ký tự và khớp nhau");
+        }
+        if (taiKhoan.getMatKhauHash() == null
+                || !passwordEncoder.matches(request.matKhauCu(), taiKhoan.getMatKhauHash())) {
+            throw new BusinessException("Mật khẩu cũ không đúng");
+        }
+        if (passwordEncoder.matches(request.matKhauMoi(), taiKhoan.getMatKhauHash())) {
+            throw new BusinessException("Mật khẩu mới không được trùng với mật khẩu cũ");
+        }
+
+        taiKhoan.setMatKhauHash(passwordEncoder.encode(request.matKhauMoi()));
+        taiKhoan.setSoLanDangNhapSai(0);
+        taiKhoan.setBiKhoa(false);
+        taiKhoanRepository.save(taiKhoan);
+        log.info("Đổi mật khẩu thành công cho tài khoản {}", taiKhoan.getTenDangNhap());
     }
 
     @Transactional(readOnly = true)
