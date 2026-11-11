@@ -68,8 +68,7 @@ class BatDongSanDangTinServiceTest {
         khachHang.setLaKhBan(false);
 
         List<HinhAnhBdsDto> hinhAnh = List.of(
-                new HinhAnhBdsDto("https://res.cloudinary.com/demo/image/upload/sample.jpg", 1)
-        );
+                new HinhAnhBdsDto("https://res.cloudinary.com/demo/image/upload/sample.jpg", 1));
 
         request = new ThemBatDongSanRequest(
                 10L,
@@ -81,8 +80,7 @@ class BatDongSanDangTinServiceTest {
                 new BigDecimal("17800000000"),
                 "Sổ đỏ chính chủ",
                 "Nhà mới xây đẹp",
-                hinhAnh
-        );
+                hinhAnh);
     }
 
     @Test
@@ -133,8 +131,7 @@ class BatDongSanDangTinServiceTest {
                 new BigDecimal("1000000000"),
                 null,
                 null,
-                hinhAnhKhongThuTu
-        );
+                hinhAnhKhongThuTu);
 
         when(taiKhoanRepository.findWithChuSoHuuById(1L)).thenReturn(Optional.of(taiKhoan));
         when(batDongSanRepository.saveAndFlush(any(BatDongSan.class))).thenAnswer(invocation -> {
@@ -183,8 +180,7 @@ class BatDongSanDangTinServiceTest {
                 new BigDecimal("1000000000"),
                 null,
                 null,
-                List.of(new HinhAnhBdsDto("https://res.cloudinary.com/demo/image/upload/sample.jpg", 1))
-        );
+                List.of(new HinhAnhBdsDto("https://res.cloudinary.com/demo/image/upload/sample.jpg", 1)));
 
         assertThrows(BadRequestException.class,
                 () -> batDongSanDangTinService.createBatDongSan(principal, requestKhongKhachHang));
