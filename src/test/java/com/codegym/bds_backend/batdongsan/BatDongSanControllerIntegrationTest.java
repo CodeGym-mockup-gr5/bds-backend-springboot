@@ -2,6 +2,7 @@ package com.codegym.bds_backend.batdongsan;
 
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.everyItem;
+import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.nullValue;
 import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
@@ -135,5 +136,54 @@ class BatDongSanControllerIntegrationTest {
         mockMvc.perform(get(URL).param("sort", "hoTen,asc"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.message", is("Tiêu chí sắp xếp không hợp lệ")));
+    }
+
+    @Test
+    @WithMockUser(roles = "NHAN_VIEN")
+    void shouldReturnImagesAndOwnerWhenStaffViewsDetail() throws Exception {
+        mockMvc.perform(get(URL + "/301"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.maBds", is("BDS301")))
+                .andExpect(jsonPath("$.data.tinhTrang", is("DA_BAN")))
+                .andExpect(jsonPath("$.data.hinhAnh", hasSize(2)))
+                .andExpect(jsonPath("$.data.hinhAnh[0].duongDan", is("/uploads/bds/301-1.jpg")))
+                .andExpect(jsonPath("$.data.hinhAnh[1].thuTu", is(1)))
+                .andExpect(jsonPath("$.data.chuSoHuu.maKh", is("KH201")))
+                .andExpect(jsonPath("$.data.chuSoHuu.soDienThoai", is("0987000201")));
+    }
+
+    @Test
+    void shouldHideOwnerWhenGuestViewsDetail() throws Exception {
+        mockMvc.perform(get(URL + "/303"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.maBds", is("BDS303")))
+                .andExpect(jsonPath("$.data.hinhAnh", hasSize(1)))
+                .andExpect(jsonPath("$.data.chuSoHuu", nullValue()));
+    }
+
+    @Test
+    void shouldReturnEmptyImagesWhenPropertyHasNoImage() throws Exception {
+        mockMvc.perform(get(URL + "/304"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.hinhAnh", hasSize(0)));
+    }
+
+    @Test
+    void shouldReturnNotFoundWhenGuestViewsSoldOrMissingProperty() throws Exception {
+        mockMvc.perform(get(URL + "/301"))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.success", is(false)))
+                .andExpect(jsonPath("$.message", is("Không tìm thấy bất động sản")));
+
+        mockMvc.perform(get(URL + "/999"))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void shouldReturnBadRequestWithFieldWhenIdIsNotNumber() throws Exception {
+        mockMvc.perform(get(URL + "/abc"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message", is("Giá trị không hợp lệ")))
+                .andExpect(jsonPath("$.errors[0].field", is("id")));
     }
 }

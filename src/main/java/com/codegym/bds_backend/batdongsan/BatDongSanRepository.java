@@ -1,5 +1,6 @@
 package com.codegym.bds_backend.batdongsan;
 
+import java.util.Optional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -15,4 +16,7 @@ public interface BatDongSanRepository
     Page<BatDongSan> findAll(Specification<BatDongSan> spec, Pageable pageable);
 
     Page<BatDongSan> findAllByOrderByNgayDangDescIdDesc(Pageable pageable);
+
+    @EntityGraph(attributePaths = {"khachHang", "hinhAnh"})
+    Optional<BatDongSan> findWithChiTietById(Long id);
 }

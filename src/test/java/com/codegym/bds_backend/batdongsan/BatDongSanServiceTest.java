@@ -9,16 +9,19 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.codegym.bds_backend.auth.CurrentUser;
+import com.codegym.bds_backend.batdongsan.dto.BatDongSanDetailResponse;
 import com.codegym.bds_backend.batdongsan.dto.BatDongSanListItemResponse;
 import com.codegym.bds_backend.batdongsan.dto.BatDongSanSearchRequest;
 import com.codegym.bds_backend.common.enums.LoaiBds;
 import com.codegym.bds_backend.common.enums.ViTri;
 import com.codegym.bds_backend.common.exception.BadRequestException;
+import com.codegym.bds_backend.common.exception.NotFoundException;
 import com.codegym.bds_backend.common.response.PageResponse;
 import com.codegym.bds_backend.khachhang.KhachHang;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -159,6 +162,55 @@ class BatDongSanServiceTest {
     private static BatDongSanSearchRequest requestWithPaging(Integer page, Integer size, String sort) {
         return new BatDongSanSearchRequest(null, null, null, null, null, null, null, null, null, null,
                 page, size, sort);
+    }
+
+    @Test
+    void shouldReturnOwnerAndOrderedImagesWhenStaffViewsDetail() {
+        when(currentUser.isAdminOrNhanVien()).thenReturn(true);
+        BatDongSan bds = batDongSan(301L, TinhTrangBds.DA_BAN);
+        bds.getKhachHang().setSoDienThoai("0987000201");
+        bds.getHinhAnh().add(hinhAnh(1L, 301L, 0, "/uploads/bds/301-1.jpg"));
+        bds.getHinhAnh().add(hinhAnh(2L, 301L, 1, "/uploads/bds/301-2.jpg"));
+        when(batDongSanRepository.findWithChiTietById(301L)).thenReturn(Optional.of(bds));
+
+        BatDongSanDetailResponse result = batDongSanService.getChiTietBatDongSan(301L);
+
+        assertThat(result.maBds()).isEqualTo("BDS301");
+        assertThat(result.hinhAnh()).extracting("thuTu").containsExactly(0, 1);
+        assertThat(result.chuSoHuu().hoTen()).isEqualTo("Chủ sở hữu 301");
+        assertThat(result.chuSoHuu().soDienThoai()).isEqualTo("0987000201");
+    }
+
+    @Test
+    void shouldHideOwnerWhenGuestViewsAvailableDetail() {
+        when(currentUser.isAdminOrNhanVien()).thenReturn(false);
+        when(batDongSanRepository.findWithChiTietById(304L))
+                .thenReturn(Optional.of(batDongSan(304L, TinhTrangBds.CO_SAN)));
+
+        BatDongSanDetailResponse result = batDongSanService.getChiTietBatDongSan(304L);
+
+        assertThat(result.chuSoHuu()).isNull();
+        assertThat(result.hinhAnh()).isEmpty();
+    }
+
+    @Test
+    void shouldThrowNotFoundWhenGuestViewsSoldProperty() {
+        when(currentUser.isAdminOrNhanVien()).thenReturn(false);
+        when(batDongSanRepository.findWithChiTietById(301L))
+                .thenReturn(Optional.of(batDongSan(301L, TinhTrangBds.DA_BAN)));
+
+        assertThatThrownBy(() -> batDongSanService.getChiTietBatDongSan(301L))
+                .isInstanceOf(NotFoundException.class)
+                .hasMessage("Không tìm thấy bất động sản");
+    }
+
+    @Test
+    void shouldThrowNotFoundWhenPropertyDoesNotExist() {
+        when(currentUser.isAdminOrNhanVien()).thenReturn(true);
+        when(batDongSanRepository.findWithChiTietById(999L)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> batDongSanService.getChiTietBatDongSan(999L))
+                .isInstanceOf(NotFoundException.class);
     }
 
     private static BatDongSan batDongSan(Long id, TinhTrangBds tinhTrang) {
