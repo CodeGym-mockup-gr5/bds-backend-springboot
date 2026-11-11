@@ -118,6 +118,9 @@ class BatDongSanServiceTest {
     void shouldRejectWhenSortDirectionIsInvalid() {
         assertThatThrownBy(() -> batDongSanService.searchBatDongSan(requestWithPaging(null, null, "gia,up")))
                 .isInstanceOf(BadRequestException.class);
+
+        assertThatThrownBy(() -> batDongSanService.searchBatDongSan(requestWithPaging(null, null, "gia,")))
+                .isInstanceOf(BadRequestException.class);
     }
 
     @Test

@@ -67,16 +67,19 @@ public class BatDongSanService {
         return result;
     }
 
+    /** Báo lỗi khi cả hai đầu khoảng có giá trị và "Từ" lớn hơn "Đến". */
     private void validateKhoang(BigDecimal from, BigDecimal to, String message) {
         if (from != null && to != null && from.compareTo(to) > 0) {
             throw new BadRequestException(message);
         }
     }
 
+    /** Trang mặc định là 0 khi không truyền. */
     private int resolvePage(BatDongSanSearchRequest request) {
         return request.page() == null ? 0 : request.page();
     }
 
+    /** Kích thước trang lấy mặc định từ cấu hình; vượt mức tối đa thì báo lỗi. */
     private int resolveSize(BatDongSanSearchRequest request) {
         if (request.size() == null) {
             return batDongSanProperties.defaultPageSize();
@@ -93,7 +96,8 @@ public class BatDongSanService {
         if (!StringUtils.hasText(sortParam)) {
             return Sort.by(Sort.Direction.DESC, DEFAULT_SORT_FIELD).and(tieBreaker);
         }
-        String[] parts = sortParam.split(",");
+        // limit -1 giữ phần rỗng cuối (vd "gia,") để báo lỗi thay vì ngầm hiểu là tăng dần
+        String[] parts = sortParam.split(",", -1);
         String field = parts[0].trim();
         if (parts.length > 2 || !SORTABLE_FIELDS.contains(field)) {
             throw new BadRequestException(MSG_SAP_XEP);
@@ -103,6 +107,7 @@ public class BatDongSanService {
         return ID_FIELD.equals(field) ? sort : sort.and(tieBreaker);
     }
 
+    /** Chỉ nhận asc hoặc desc (không phân biệt hoa thường). */
     private Sort.Direction parseDirection(String value) {
         return switch (value.trim().toLowerCase(Locale.ROOT)) {
             case "asc" -> Sort.Direction.ASC;
