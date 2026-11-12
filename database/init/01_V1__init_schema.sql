@@ -52,6 +52,7 @@ CREATE TABLE khach_hang (
     ho_ten          VARCHAR(45)  NOT NULL,
     la_kh_mua       BOOLEAN      NOT NULL DEFAULT FALSE,
     la_kh_ban       BOOLEAN      NOT NULL DEFAULT FALSE,
+    trang_thai_duyet VARCHAR(10) NOT NULL DEFAULT 'DA_DUYET',
     ngay_sinh       DATE         NULL,
     gioi_tinh       VARCHAR(3)   NULL,
     dia_chi         VARCHAR(255) NULL,
@@ -63,6 +64,7 @@ CREATE TABLE khach_hang (
     CONSTRAINT uq_khach_hang_ma UNIQUE (ma_kh),
     CONSTRAINT uq_khach_hang_cccd UNIQUE (so_cccd),
     CONSTRAINT ck_khach_hang_gioi_tinh CHECK (gioi_tinh IS NULL OR gioi_tinh IN ('NAM', 'NU')),
+    CONSTRAINT ck_khach_hang_trang_thai_duyet CHECK (trang_thai_duyet IN ('CHO_DUYET', 'DA_DUYET')),
     CONSTRAINT ck_khach_hang_sdt CHECK (so_dien_thoai REGEXP '^0[0-9]{9}$'),
     CONSTRAINT ck_khach_hang_cccd CHECK (so_cccd IS NULL OR so_cccd REGEXP '^[0-9]{12}$')
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;

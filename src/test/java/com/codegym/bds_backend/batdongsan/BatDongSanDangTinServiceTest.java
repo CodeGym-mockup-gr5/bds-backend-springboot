@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -15,8 +16,10 @@ import com.codegym.bds_backend.batdongsan.dto.BatDongSanResponse;
 import com.codegym.bds_backend.batdongsan.dto.HinhAnhBdsDto;
 import com.codegym.bds_backend.batdongsan.dto.ThemBatDongSanRequest;
 import com.codegym.bds_backend.common.enums.LoaiBds;
+import com.codegym.bds_backend.common.enums.TrangThaiDuyet;
 import com.codegym.bds_backend.common.enums.ViTri;
 import com.codegym.bds_backend.common.exception.BadRequestException;
+import com.codegym.bds_backend.common.exception.BusinessException;
 import com.codegym.bds_backend.common.exception.NotFoundException;
 import com.codegym.bds_backend.common.response.PageResponse;
 import com.codegym.bds_backend.khachhang.KhachHang;
@@ -36,6 +39,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
 
 @ExtendWith(MockitoExtension.class)
 class BatDongSanDangTinServiceTest {
@@ -84,7 +88,9 @@ class BatDongSanDangTinServiceTest {
     }
 
     @Test
-    void shouldCreateBatDongSanAsKhachHangSuccessfully() {
+    void shouldCreateBatDongSanWhenKhachHangDaDuyet() {
+        khachHang.setLaKhBan(true);
+        khachHang.setTrangThaiDuyet(TrangThaiDuyet.DA_DUYET);
         JwtPrincipal principal = new JwtPrincipal(1L, "khachhang1", List.of("ROLE_KHACH_HANG"));
         TaiKhoan taiKhoan = new TaiKhoan();
         taiKhoan.setId(1L);
@@ -110,7 +116,40 @@ class BatDongSanDangTinServiceTest {
     }
 
     @Test
+    void shouldThrowForbiddenWhenKhachHangChuaDangKyBan() {
+        khachHang.setLaKhBan(false);
+        khachHang.setTrangThaiDuyet(TrangThaiDuyet.DA_DUYET);
+        stubTaiKhoanKhachHang();
+
+        BusinessException e = assertThrows(BusinessException.class,
+                () -> batDongSanDangTinService.createBatDongSan(khachHangPrincipal(), request));
+
+        assertEquals(HttpStatus.FORBIDDEN, e.getStatus());
+        assertEquals("Tài khoản chưa đăng ký đăng tin bán. Vui lòng gửi yêu cầu đăng tin để Admin duyệt",
+                e.getMessage());
+        verify(batDongSanRepository, never()).saveAndFlush(any(BatDongSan.class));
+        verify(eventPublisher, never()).publishEvent(any(BatDongSanDangTinEvent.class));
+    }
+
+    @Test
+    void shouldThrowForbiddenWhenKhachHangChoDuyet() {
+        khachHang.setLaKhBan(true);
+        khachHang.setTrangThaiDuyet(TrangThaiDuyet.CHO_DUYET);
+        stubTaiKhoanKhachHang();
+
+        BusinessException e = assertThrows(BusinessException.class,
+                () -> batDongSanDangTinService.createBatDongSan(khachHangPrincipal(), request));
+
+        assertEquals(HttpStatus.FORBIDDEN, e.getStatus());
+        assertEquals("Tài khoản đang chờ Admin duyệt để đăng tin bán", e.getMessage());
+        verify(batDongSanRepository, never()).saveAndFlush(any(BatDongSan.class));
+        verify(eventPublisher, never()).publishEvent(any(BatDongSanDangTinEvent.class));
+    }
+
+    @Test
     void shouldPreserveImageOrderWhenThuTuIsZeroOrNegative() {
+        khachHang.setLaKhBan(true);
+        khachHang.setTrangThaiDuyet(TrangThaiDuyet.DA_DUYET);
         JwtPrincipal principal = new JwtPrincipal(1L, "khachhang1", List.of("ROLE_KHACH_HANG"));
         TaiKhoan taiKhoan = new TaiKhoan();
         taiKhoan.setId(1L);
@@ -148,7 +187,9 @@ class BatDongSanDangTinServiceTest {
     }
 
     @Test
-    void shouldCreateBatDongSanAsNhanVienSuccessfully() {
+    void shouldCreateBatDongSanAndApproveKhachHangWhenNhanVienDangThayKhachChoDuyet() {
+        khachHang.setLaKhBan(false);
+        khachHang.setTrangThaiDuyet(TrangThaiDuyet.CHO_DUYET);
         JwtPrincipal principal = new JwtPrincipal(2L, "nhanvien1", List.of("ROLE_NHAN_VIEN"));
 
         when(khachHangRepository.findById(10L)).thenReturn(Optional.of(khachHang));
@@ -164,6 +205,28 @@ class BatDongSanDangTinServiceTest {
         assertEquals(101L, response.id());
         assertEquals("BDS101", response.maBds());
         assertTrue(khachHang.isLaKhBan());
+        assertEquals(TrangThaiDuyet.DA_DUYET, khachHang.getTrangThaiDuyet());
+        verify(eventPublisher).publishEvent(any(BatDongSanDangTinEvent.class));
+    }
+
+    @Test
+    void shouldCreateBatDongSanWhenAdminDangThayKhachChuaDangKyBan() {
+        khachHang.setLaKhBan(false);
+        khachHang.setTrangThaiDuyet(TrangThaiDuyet.DA_DUYET);
+        JwtPrincipal principal = new JwtPrincipal(3L, "admin", List.of("ROLE_NHAN_VIEN", "ROLE_ADMIN"));
+
+        when(khachHangRepository.findById(10L)).thenReturn(Optional.of(khachHang));
+        when(batDongSanRepository.saveAndFlush(any(BatDongSan.class))).thenAnswer(invocation -> {
+            BatDongSan bds = invocation.getArgument(0);
+            bds.setId(102L);
+            return bds;
+        });
+
+        BatDongSanResponse response = batDongSanDangTinService.createBatDongSan(principal, request);
+
+        assertEquals("BDS102", response.maBds());
+        assertTrue(khachHang.isLaKhBan());
+        assertEquals(TrangThaiDuyet.DA_DUYET, khachHang.getTrangThaiDuyet());
         verify(eventPublisher).publishEvent(any(BatDongSanDangTinEvent.class));
     }
 
@@ -232,5 +295,16 @@ class BatDongSanDangTinServiceTest {
         assertNotNull(response);
         assertEquals(1, response.content().size());
         assertEquals("BDS301", response.content().get(0).maBds());
+    }
+
+    private static JwtPrincipal khachHangPrincipal() {
+        return new JwtPrincipal(1L, "khachhang1", List.of("ROLE_KHACH_HANG"));
+    }
+
+    private void stubTaiKhoanKhachHang() {
+        TaiKhoan taiKhoan = new TaiKhoan();
+        taiKhoan.setId(1L);
+        taiKhoan.setKhachHang(khachHang);
+        when(taiKhoanRepository.findWithChuSoHuuById(1L)).thenReturn(Optional.of(taiKhoan));
     }
 }

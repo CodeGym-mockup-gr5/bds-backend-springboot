@@ -53,6 +53,8 @@ Mỗi khi nhóm sửa `01_V1__init_schema.sql` hoặc `02_V2__sample_data.sql` (
 2. Chạy `docker compose down -v` rồi `docker compose up -d`.
 3. Kiểm tra lại bằng lệnh ở mục "Kiểm tra dữ liệu".
 
+Lần cập nhật gần nhất (issue #34): bảng `khach_hang` thêm cột `trang_thai_duyet`. Phải tạo lại database bằng `docker compose down -v` rồi `docker compose up -d`, nếu không backend sẽ báo lỗi validate schema khi khởi động.
+
 Lệnh `down -v` xóa toàn bộ dữ liệu trong container. Chấp nhận được vì đây chỉ là dữ liệu mẫu.
 
 ## Lưu ý
