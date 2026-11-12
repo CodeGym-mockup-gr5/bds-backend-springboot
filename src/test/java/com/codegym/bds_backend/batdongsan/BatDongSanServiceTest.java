@@ -196,7 +196,7 @@ class BatDongSanServiceTest {
     }
 
     @Test
-    void shouldReturnOwnerAndOrderedImagesWhenStaffViewsDetail() {
+    void shouldHideOwnerPhoneWhenStaffViewsDetail() {
         when(currentUser.isAdminOrNhanVien()).thenReturn(true);
         BatDongSan bds = batDongSan(301L, TinhTrangBds.DA_BAN);
         bds.getKhachHang().setSoDienThoai("0987000201");
@@ -209,18 +209,34 @@ class BatDongSanServiceTest {
         assertThat(result.maBds()).isEqualTo("BDS301");
         assertThat(result.hinhAnh()).extracting("thuTu").containsExactly(0, 1);
         assertThat(result.chuSoHuu().hoTen()).isEqualTo("Chủ sở hữu 301");
-        assertThat(result.chuSoHuu().soDienThoai()).isEqualTo("0987000201");
+        assertThat(result.chuSoHuu().soDienThoai()).isNull();
     }
 
-    @Test
-    void shouldShowOwnerWhenCustomerViewsOwnSoldProperty() {
-        when(currentUser.findKhachHangId()).thenReturn(Optional.of(1301L));
-        when(batDongSanRepository.findWithChiTietById(301L))
-                .thenReturn(Optional.of(batDongSan(301L, TinhTrangBds.DA_BAN)));
+        @Test
+    void shouldShowOwnerPhoneWhenAdminViewsDetail() {
+        when(currentUser.isAdminOrNhanVien()).thenReturn(true);
+        when(currentUser.isAdmin()).thenReturn(true);
+        BatDongSan bds = batDongSan(301L, TinhTrangBds.DA_BAN);
+        bds.getKhachHang().setSoDienThoai("0987000201");
+        when(batDongSanRepository.findWithChiTietById(301L)).thenReturn(Optional.of(bds));
 
         BatDongSanDetailResponse result = batDongSanService.getChiTietBatDongSan(301L);
 
         assertThat(result.chuSoHuu().maKh()).isEqualTo("KH1301");
+        assertThat(result.chuSoHuu().soDienThoai()).isEqualTo("0987000201");
+    }
+
+        @Test
+    void shouldShowOwnerPhoneWhenCustomerViewsOwnSoldProperty() {
+        when(currentUser.findKhachHangId()).thenReturn(Optional.of(1301L));
+        BatDongSan bds = batDongSan(301L, TinhTrangBds.DA_BAN);
+        bds.getKhachHang().setSoDienThoai("0987000201");
+        when(batDongSanRepository.findWithChiTietById(301L)).thenReturn(Optional.of(bds));
+
+        BatDongSanDetailResponse result = batDongSanService.getChiTietBatDongSan(301L);
+
+        assertThat(result.chuSoHuu().maKh()).isEqualTo("KH1301");
+        assertThat(result.chuSoHuu().soDienThoai()).isEqualTo("0987000201");
     }
 
     @Test
