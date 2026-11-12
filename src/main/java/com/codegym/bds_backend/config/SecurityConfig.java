@@ -65,6 +65,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/v1/thong-bao/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/ho-tro/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/header/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/footer/**").permitAll()
                         .anyRequest().authenticated())
                 .exceptionHandling(ex -> ex
                         .authenticationEntryPoint((req, res, e) ->
