@@ -4,6 +4,7 @@ import com.codegym.bds_backend.common.exception.NotFoundException;
 import com.codegym.bds_backend.hotro.dto.HuongDanResponse;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -22,8 +23,8 @@ public class HoTroService {
                 "Cho phép người dùng click vào để đọc hướng dẫn sử dụng tài khoản",
                 "1. Đăng nhập bằng tên đăng nhập và mật khẩu được cấp.\n"
                         + "2. Với nhân viên mới: kiểm tra email lời mời kích hoạt và thiết lập mật khẩu lần đầu.\n"
-                        + "3. Với khách hàng: có thể tự đăng ký tài khoản tại màn hình Đăng ký để quản lý nhu cầu mua "
-                        + "và tin đăng.\n"
+                        + "3. Với khách hàng: có thể tự đăng ký tài khoản tại màn hình Đăng ký để quản lý nhu cầu "
+                        + "mua và tin đăng.\n"
                         + "4. Sau khi đăng nhập thành công, người dùng có thể xem và chỉnh sửa thông tin cá nhân.",
                 "/huong-dan/tai-khoan"
         ));
@@ -32,10 +33,10 @@ public class HoTroService {
                 "lap-hop-dong",
                 "Hướng dẫn sử dụng lập hợp đồng",
                 "Cho phép người dùng click vào để đọc tài liệu hướng dẫn lập hợp đồng",
-                "1. Truy cập vào mục Quản lý biểu mẫu hoặc Quản lý giao dịch.\n"
-                        + "2. Tải về mẫu Hợp đồng đặt cọc hoặc Hợp đồng ủy quyền môi giới chuẩn của trung tâm.\n"
-                        + "3. Điền đầy đủ thông tin bên mua, bên bán, thông tin pháp lý bất động sản và số tiền giao dịch.\n"
-                        + "4. Ghi nhận giao dịch trên hệ thống để theo dõi tiến độ và tỷ lệ hoa hồng.",
+                "1. Khách hàng và nhân viên liên hệ tư vấn, thống nhất các điều khoản mua bán hoặc đặt cọc.\n"
+                        + "2. Nhân viên phụ trách hỗ trợ soạn hợp đồng theo biểu mẫu chuẩn của trung tâm.\n"
+                        + "3. Đối soát kỹ giấy tờ pháp lý bất động sản, thông tin các bên và số tiền giao dịch.\n"
+                        + "4. Tiến hành ký kết hợp đồng, trung tâm lưu trữ hồ sơ và hỗ trợ thủ tục công chứng.",
                 "/huong-dan/lap-hop-dong"
         ));
 
@@ -43,10 +44,12 @@ public class HoTroService {
                 "doi-mat-khau",
                 "Hướng dẫn đổi mật khẩu",
                 "Cho phép người dùng click vào để đọc tài liệu hướng dẫn đổi mật khẩu",
-                "1. Đổi mật khẩu chủ động: Đăng nhập vào hệ thống, vào mục 'Thông tin cá nhân' > chọn 'Đổi mật khẩu'.\n"
-                        + "2. Nhập mật khẩu hiện tại và mật khẩu mới (tối thiểu 6 ký tự, gồm cả chữ và số).\n"
+                "1. Đổi mật khẩu chủ động: Đăng nhập vào hệ thống, vào mục 'Cá nhân' > chọn 'Đổi mật khẩu'.\n"
+                        + "2. Quy định đổi mật khẩu: Mật khẩu mới từ 6 đến 32 ký tự, không được chứa khoảng trắng "
+                        + "và không trùng mật khẩu cũ.\n"
                         + "3. Quên mật khẩu: Tại màn hình Đăng nhập, bấm 'Quên mật khẩu' và nhập tên đăng nhập.\n"
-                        + "4. Hệ thống sẽ gửi email chứa liên kết đặt lại mật khẩu có hiệu lực trong 30 phút.",
+                        + "4. Hệ thống sẽ gửi email chứa liên kết đặt lại mật khẩu có hiệu lực trong 30 phút. "
+                        + "Mật khẩu đặt lại yêu cầu độ dài từ 8 đến 64 ký tự.",
                 "/huong-dan/doi-mat-khau"
         ));
 
@@ -68,9 +71,14 @@ public class HoTroService {
     }
 
     public HuongDanResponse findChiTietHuongDan(String maHuongDan) {
-        if (maHuongDan == null || !DANH_SACH_HUONG_DAN.containsKey(maHuongDan.trim().toLowerCase())) {
+        if (maHuongDan == null || maHuongDan.isBlank()) {
+            throw new NotFoundException("Không tìm thấy tài liệu hướng dẫn");
+        }
+        String key = maHuongDan.trim().toLowerCase(Locale.ROOT);
+        HuongDanResponse huongDan = DANH_SACH_HUONG_DAN.get(key);
+        if (huongDan == null) {
             throw new NotFoundException("Không tìm thấy tài liệu hướng dẫn với mã: " + maHuongDan);
         }
-        return DANH_SACH_HUONG_DAN.get(maHuongDan.trim().toLowerCase());
+        return huongDan;
     }
 }
