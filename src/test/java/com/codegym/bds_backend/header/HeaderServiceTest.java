@@ -12,6 +12,7 @@ import com.codegym.bds_backend.auth.TaiKhoanRepository;
 import com.codegym.bds_backend.header.dto.HeaderResponse;
 import com.codegym.bds_backend.khachhang.KhachHang;
 import com.codegym.bds_backend.nhanvien.NhanVien;
+import java.time.LocalDateTime;
 import java.util.Optional;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -109,6 +110,28 @@ class HeaderServiceTest {
         when(taiKhoanRepository.findWithChuSoHuuById(999L)).thenReturn(Optional.empty());
 
         HeaderResponse response = headerService.findThongTinHeader(999L);
+
+        assertNotNull(response);
+        assertFalse(response.daDangNhap());
+        assertFalse(response.coNutDangTin());
+        assertNull(response.nguoiDung());
+    }
+
+    @Test
+    @DisplayName("Tài khoản có chủ sở hữu không còn hiệu lực (bị xóa mềm): fallback về chưa đăng nhập")
+    void findThongTinHeader_khiChuSoHuuBiXoaMem_fallbackChuaDangNhap() {
+        NhanVien nhanVien = new NhanVien();
+        nhanVien.setHoTen("Nguyễn Văn A");
+        nhanVien.setDeletedAt(LocalDateTime.now());
+
+        TaiKhoan taiKhoan = new TaiKhoan();
+        taiKhoan.setId(30L);
+        taiKhoan.setTenDangNhap("nhanvien_cu");
+        taiKhoan.setNhanVien(nhanVien);
+
+        when(taiKhoanRepository.findWithChuSoHuuById(30L)).thenReturn(Optional.of(taiKhoan));
+
+        HeaderResponse response = headerService.findThongTinHeader(30L);
 
         assertNotNull(response);
         assertFalse(response.daDangNhap());

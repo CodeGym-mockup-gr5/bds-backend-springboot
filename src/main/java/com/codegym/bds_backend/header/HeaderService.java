@@ -36,6 +36,7 @@ public class HeaderService {
         }
 
         return taiKhoanRepository.findWithChuSoHuuById(userId)
+                .filter(TaiKhoan::chuSoHuuConHieuLuc)
                 .map(this::taoHeaderDaDangNhap)
                 .orElseGet(this::taoHeaderChuaDangNhap);
     }
