@@ -1,9 +1,11 @@
 package com.codegym.bds_backend.thongbao;
 
 import com.codegym.bds_backend.auth.JwtPrincipal;
+import com.codegym.bds_backend.common.exception.BusinessException;
 import com.codegym.bds_backend.common.response.ApiResponse;
 import com.codegym.bds_backend.common.response.PageResponse;
 import com.codegym.bds_backend.thongbao.dto.CreateThongBaoRequest;
+import com.codegym.bds_backend.thongbao.dto.ThongBaoPublicResponse;
 import com.codegym.bds_backend.thongbao.dto.ThongBaoResponse;
 import com.codegym.bds_backend.thongbao.dto.UpdateThongBaoRequest;
 import io.swagger.v3.oas.annotations.Operation;
@@ -34,22 +36,24 @@ public class ThongBaoController {
     private final ThongBaoService thongBaoService;
 
     @GetMapping
-    @Operation(summary = "Lấy danh sách thông báo phân trang, hỗ trợ tìm kiếm theo từ khóa tiêu đề")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Lấy danh sách thông báo phân trang")
     public ApiResponse<PageResponse<ThongBaoResponse>> findThongBao(
-            @RequestParam(required = false) String tuKhoa,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
-        return ApiResponse.ok(thongBaoService.findThongBao(tuKhoa, PageRequest.of(page, size)));
+        validatePagination(page, size);
+        return ApiResponse.ok(thongBaoService.findThongBao(PageRequest.of(page, size)));
     }
 
     @GetMapping("/moi-nhat")
     @Operation(summary = "Lấy danh sách thông báo mới nhất phục vụ hiển thị widget trang chủ")
-    public ApiResponse<List<ThongBaoResponse>> findTopThongBaoMoiNhat(
+    public ApiResponse<List<ThongBaoPublicResponse>> findTopThongBaoMoiNhat(
             @RequestParam(defaultValue = "5") int limit) {
         return ApiResponse.ok(thongBaoService.findTopThongBaoMoiNhat(limit));
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Xem chi tiết một thông báo theo mã ID")
     public ApiResponse<ThongBaoResponse> findThongBaoById(@PathVariable Long id) {
         return ApiResponse.ok(thongBaoService.findThongBaoById(id));
@@ -63,7 +67,7 @@ public class ThongBaoController {
             @AuthenticationPrincipal JwtPrincipal principal) {
         ThongBaoResponse response = thongBaoService.createThongBao(request, principal.userId());
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(ApiResponse.ok(response, "Tạo thông báo thành công"));
+                .body(ApiResponse.ok(response, "Thêm thông báo thành công"));
     }
 
     @PutMapping("/{id}")
@@ -72,7 +76,7 @@ public class ThongBaoController {
     public ApiResponse<ThongBaoResponse> updateThongBao(
             @PathVariable Long id,
             @Valid @RequestBody UpdateThongBaoRequest request) {
-        return ApiResponse.ok(thongBaoService.updateThongBao(id, request), "Cập nhật thông báo thành công");
+        return ApiResponse.ok(thongBaoService.updateThongBao(id, request), "Sửa thông báo thành công");
     }
 
     @DeleteMapping("/{id}")
@@ -80,6 +84,12 @@ public class ThongBaoController {
     @Operation(summary = "Xóa mềm thông báo (Dành cho Admin)")
     public ApiResponse<Void> deleteThongBao(@PathVariable Long id) {
         thongBaoService.deleteThongBao(id);
-        return ApiResponse.ok(null, "Xóa thông báo thành công");
+        return ApiResponse.ok(null, "Xóa thành công");
+    }
+
+    private void validatePagination(int page, int size) {
+        if (page < 0 || size < 1 || size > 100) {
+            throw new BusinessException(HttpStatus.BAD_REQUEST, "Giá trị phân trang không hợp lệ");
+        }
     }
 }

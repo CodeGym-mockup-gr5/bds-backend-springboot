@@ -1,5 +1,6 @@
 package com.codegym.bds_backend.thongbao;
 
+import com.codegym.bds_backend.thongbao.dto.ThongBaoPublicResponse;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -62,9 +63,9 @@ class ThongBaoServiceTest {
     void findThongBao_coKetQua_traVePageResponse() {
         Pageable pageable = PageRequest.of(0, 10);
         Page<ThongBao> page = new PageImpl<>(List.of(thongBao), pageable, 1);
-        when(thongBaoRepository.findThongBaoByTuKhoa("lễ", pageable)).thenReturn(page);
+        when(thongBaoRepository.findAllByOrderByNgayDescIdDesc(pageable)).thenReturn(page);
 
-        PageResponse<ThongBaoResponse> response = thongBaoService.findThongBao("lễ", pageable);
+        PageResponse<ThongBaoResponse> response = thongBaoService.findThongBao(pageable);
 
         assertEquals(1, response.content().size());
         assertEquals("Thông báo lễ Quốc khánh", response.content().get(0).tenThongBao());
@@ -72,13 +73,17 @@ class ThongBaoServiceTest {
     }
 
     @Test
-    void findTopThongBaoMoiNhat_traVeDanhSachTop() {
-        when(thongBaoRepository.findTopMoiNhat(any(Pageable.class))).thenReturn(List.of(thongBao));
+    void findTopThongBaoMoiNhat_traVeDanhSachPublicResponse() {
+        Pageable pageable = PageRequest.of(0, 5);
+        Page<ThongBao> page = new PageImpl<>(List.of(thongBao), pageable, 1);
+        when(thongBaoRepository.findAllByOrderByNgayDescIdDesc(pageable)).thenReturn(page);
 
-        List<ThongBaoResponse> list = thongBaoService.findTopThongBaoMoiNhat(5);
+        List<ThongBaoPublicResponse> result = thongBaoService.findTopThongBaoMoiNhat(5);
 
-        assertEquals(1, list.size());
-        assertEquals(1L, list.get(0).id());
+        assertEquals(1, result.size());
+        assertEquals(1L, result.get(0).id());
+        assertEquals("Thông báo lễ Quốc khánh", result.get(0).tenThongBao());
+        assertEquals("Nghỉ lễ theo lịch nhà nước", result.get(0).noiDung());
     }
 
     @Test
@@ -160,5 +165,15 @@ class ThongBaoServiceTest {
         thongBaoService.deleteThongBao(1L);
 
         verify(thongBaoRepository).delete(thongBao);
+    }
+
+    @Test
+    void deleteThongBao_khongTonTai_nemNotFoundVoiMessageQuyDinh() {
+        when(thongBaoRepository.findById(999L)).thenReturn(Optional.empty());
+
+        NotFoundException exception = assertThrows(
+                NotFoundException.class, () -> thongBaoService.deleteThongBao(999L));
+
+        assertEquals("Không tồn tại dữ liệu để xóa", exception.getMessage());
     }
 }
