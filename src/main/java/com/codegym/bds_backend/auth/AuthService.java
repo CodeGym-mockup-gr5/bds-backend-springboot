@@ -7,6 +7,7 @@ import com.codegym.bds_backend.auth.dto.LoginResponse;
 import com.codegym.bds_backend.auth.dto.RegisterRequest;
 import com.codegym.bds_backend.auth.dto.SetPasswordRequest;
 import com.codegym.bds_backend.auth.dto.ThongTinTaiKhoan;
+import com.codegym.bds_backend.common.enums.TrangThaiDuyet;
 import com.codegym.bds_backend.common.enums.VaiTro;
 import com.codegym.bds_backend.common.exception.BadRequestException;
 import com.codegym.bds_backend.common.exception.BusinessException;
@@ -103,6 +104,10 @@ public class AuthService {
         khachHang.setSoDienThoai(request.soDienThoai());
         khachHang.setEmail(email);
         khachHang.setSoCccd(soCccd);
+        boolean muonDangTinBan = Boolean.TRUE.equals(request.muonDangTinBan());
+        khachHang.setLaKhMua(true);
+        khachHang.setLaKhBan(muonDangTinBan);
+        khachHang.setTrangThaiDuyet(muonDangTinBan ? TrangThaiDuyet.CHO_DUYET : TrangThaiDuyet.DA_DUYET);
         khachHang = khachHangRepository.saveAndFlush(khachHang);
         khachHang.setMaKh(MaHienThi.format(MaHienThi.KHACH_HANG, khachHang.getId()));
         TaiKhoan taiKhoan = new TaiKhoan();
@@ -189,11 +194,16 @@ public class AuthService {
                 vaiTro.add(VaiTro.ADMIN.authority());
             }
         }
-        if (taiKhoan.getKhachHang() != null) {
+        KhachHang khachHang = taiKhoan.getKhachHang();
+        Boolean laKhBan = null;
+        String trangThaiDuyet = null;
+        if (khachHang != null) {
             vaiTro.add(VaiTro.KHACH_HANG.authority());
+            laKhBan = khachHang.isLaKhBan();
+            trangThaiDuyet = khachHang.getTrangThaiDuyet() != null ? khachHang.getTrangThaiDuyet().name() : null;
         }
-        return new ThongTinTaiKhoan(
-                taiKhoan.getId(), taiKhoan.getTenDangNhap(), taiKhoan.hoTenChuSoHuu(), List.copyOf(vaiTro));
+        return new ThongTinTaiKhoan(taiKhoan.getId(), taiKhoan.getTenDangNhap(), taiKhoan.hoTenChuSoHuu(),
+                List.copyOf(vaiTro), laKhBan, trangThaiDuyet);
     }
 
     private static BusinessException invalidLogin() {
