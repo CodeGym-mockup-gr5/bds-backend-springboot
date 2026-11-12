@@ -61,6 +61,7 @@ class BatDongSanServiceTest {
     @Test
     void shouldUseLowestOrderImageAsThumbnailWhenSearching() {
         when(currentUser.isAdminOrNhanVien()).thenReturn(true);
+        when(currentUser.isAdmin()).thenReturn(true);
         Page<BatDongSan> page = new PageImpl<>(
                 List.of(batDongSan(301L, TinhTrangBds.DA_BAN),
                         batDongSan(304L, TinhTrangBds.CO_SAN)),
@@ -77,6 +78,37 @@ class BatDongSanServiceTest {
         assertThat(result.content().get(0).anhDaiDien()).isEqualTo("/uploads/bds/301-1.jpg");
         assertThat(result.content().get(1).anhDaiDien()).isNull();
         assertThat(result.content().get(0).tenChuSoHuu()).isEqualTo("Chủ sở hữu 301");
+    }
+
+    @Test
+    void shouldHideOwnerWhenStaffIsNotAdmin() {
+        when(currentUser.isAdminOrNhanVien()).thenReturn(true);
+        Page<BatDongSan> page = new PageImpl<>(
+                List.of(batDongSan(301L, TinhTrangBds.DA_BAN)), PageRequest.of(0, 10), 1);
+        when(batDongSanRepository.findAll(ArgumentMatchers.<Specification<BatDongSan>>any(), any(Pageable.class)))
+                .thenReturn(page);
+        when(hinhAnhBdsRepository.findByBatDongSanIds(anyCollection())).thenReturn(List.of());
+
+        BatDongSanListItemResponse item = batDongSanService.searchBatDongSan(emptyRequest()).content().get(0);
+
+        assertThat(item.maKh()).isNull();
+        assertThat(item.tenChuSoHuu()).isNull();
+    }
+
+    @Test
+    void shouldShowOwnerOnlyForOwnPropertyWhenCustomerSearches() {
+        when(currentUser.findKhachHangId()).thenReturn(Optional.of(1304L));
+        Page<BatDongSan> page = new PageImpl<>(
+                List.of(batDongSan(303L, TinhTrangBds.CO_SAN), batDongSan(304L, TinhTrangBds.CO_SAN)),
+                PageRequest.of(0, 10), 2);
+        when(batDongSanRepository.findAll(ArgumentMatchers.<Specification<BatDongSan>>any(), any(Pageable.class)))
+                .thenReturn(page);
+        when(hinhAnhBdsRepository.findByBatDongSanIds(anyCollection())).thenReturn(List.of());
+
+        List<BatDongSanListItemResponse> items = batDongSanService.searchBatDongSan(emptyRequest()).content();
+
+        assertThat(items.get(0).tenChuSoHuu()).isNull();
+        assertThat(items.get(1).maKh()).isEqualTo("KH1304");
     }
 
     @Test
@@ -165,8 +197,9 @@ class BatDongSanServiceTest {
     }
 
     @Test
-    void shouldReturnOwnerAndOrderedImagesWhenStaffViewsDetail() {
+    void shouldReturnOwnerAndOrderedImagesWhenAdminViewsDetail() {
         when(currentUser.isAdminOrNhanVien()).thenReturn(true);
+        when(currentUser.isAdmin()).thenReturn(true);
         BatDongSan bds = batDongSan(301L, TinhTrangBds.DA_BAN);
         bds.getKhachHang().setSoDienThoai("0987000201");
         bds.getHinhAnh().add(hinhAnh(1L, 301L, 0, "/uploads/bds/301-1.jpg"));
@@ -179,6 +212,29 @@ class BatDongSanServiceTest {
         assertThat(result.hinhAnh()).extracting("thuTu").containsExactly(0, 1);
         assertThat(result.chuSoHuu().hoTen()).isEqualTo("Chủ sở hữu 301");
         assertThat(result.chuSoHuu().soDienThoai()).isEqualTo("0987000201");
+    }
+
+    @Test
+    void shouldHideOwnerWhenStaffViewsDetail() {
+        when(currentUser.isAdminOrNhanVien()).thenReturn(true);
+        when(batDongSanRepository.findWithChiTietById(301L))
+                .thenReturn(Optional.of(batDongSan(301L, TinhTrangBds.DA_BAN)));
+
+        BatDongSanDetailResponse result = batDongSanService.getChiTietBatDongSan(301L);
+
+        assertThat(result.tinhTrang()).isEqualTo(TinhTrangBds.DA_BAN);
+        assertThat(result.chuSoHuu()).isNull();
+    }
+
+    @Test
+    void shouldShowOwnerWhenCustomerViewsOwnSoldProperty() {
+        when(currentUser.findKhachHangId()).thenReturn(Optional.of(1301L));
+        when(batDongSanRepository.findWithChiTietById(301L))
+                .thenReturn(Optional.of(batDongSan(301L, TinhTrangBds.DA_BAN)));
+
+        BatDongSanDetailResponse result = batDongSanService.getChiTietBatDongSan(301L);
+
+        assertThat(result.chuSoHuu().maKh()).isEqualTo("KH1301");
     }
 
     @Test
