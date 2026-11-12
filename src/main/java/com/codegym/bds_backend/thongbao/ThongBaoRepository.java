@@ -9,7 +9,8 @@ import org.springframework.data.repository.query.Param;
 
 public interface ThongBaoRepository extends JpaRepository<ThongBao, Long> {
 
-    @Query("select t from ThongBao t where (:tuKhoa is null or lower(t.tenThongBao) like lower(concat('%', :tuKhoa, '%'))) "
+    @Query("select t from ThongBao t "
+            + "where (:tuKhoa is null or lower(t.tenThongBao) like lower(concat('%', :tuKhoa, '%'))) "
             + "order by t.ngay desc, t.id desc")
     Page<ThongBao> findThongBaoByTuKhoa(@Param("tuKhoa") String tuKhoa, Pageable pageable);
 
