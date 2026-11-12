@@ -63,6 +63,7 @@ public class SecurityConfig {
 
                         .requestMatchers(HttpMethod.GET, "/api/v1/bat-dong-san/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/thong-bao/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/ho-tro/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/header/**").permitAll()
                         .anyRequest().authenticated())
                 .exceptionHandling(ex -> ex
