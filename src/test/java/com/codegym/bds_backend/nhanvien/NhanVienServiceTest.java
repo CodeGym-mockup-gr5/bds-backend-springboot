@@ -235,7 +235,7 @@ class NhanVienServiceTest {
                 ChucVu.NHAN_VIEN,
                 false);
 
-        BusinessException e = assertThrows(BusinessException.class, () -> service.updateNhanVien(1L, request,null));
+        BusinessException e = assertThrows(BusinessException.class, () -> service.updateNhanVien(1L, request, null));
         assertEquals("Email đã được sử dụng", e.getMessage());
     }
 
@@ -300,22 +300,23 @@ class NhanVienServiceTest {
 
         assertThrows(NotFoundException.class, () -> service.deleteNhanVien(999L, null));
     }
+
     @Test
-        void updateNhanVien_haQuyenAdminCuoiCung_nemLoi() {
-            NhanVien nv = new NhanVien();
-            nv.setId(1L);
-            nv.setEmail("a@x.com");
-            nv.setSoDienThoai("0900000000");
-            nv.setLaAdmin(true);
-            when(nhanVienRepository.findById(1L)).thenReturn(Optional.of(nv));
-            when(nhanVienRepository.countByLaAdminTrue()).thenReturn(1L);
+    void updateNhanVien_haQuyenAdminCuoiCung_nemLoi() {
+        NhanVien nv = new NhanVien();
+        nv.setId(1L);
+        nv.setEmail("a@x.com");
+        nv.setSoDienThoai("0900000000");
+        nv.setLaAdmin(true);
+        when(nhanVienRepository.findById(1L)).thenReturn(Optional.of(nv));
+        when(nhanVienRepository.countByLaAdminTrue()).thenReturn(1L);
 
-            UpdateNhanVienRequest req = new UpdateNhanVienRequest(
-                    "Tên", LocalDate.of(1990, 1, 1), GioiTinh.NAM, "HN",
-                    "0900000000", "a@x.com", ChucVu.TRUONG_PHONG, false);
+        UpdateNhanVienRequest req = new UpdateNhanVienRequest(
+                "Tên", LocalDate.of(1990, 1, 1), GioiTinh.NAM, "HN",
+                "0900000000", "a@x.com", ChucVu.TRUONG_PHONG, false);
 
-            assertThrows(BusinessException.class, () -> service.updateNhanVien(1L, req, null));
-        }
+        assertThrows(BusinessException.class, () -> service.updateNhanVien(1L, req, null));
+    }
 
     private static NhanVien createSampleNhanVien(
             Long id, String maNv, String hoTen, String email, String phone) {
