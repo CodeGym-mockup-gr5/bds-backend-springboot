@@ -32,6 +32,7 @@ import org.springframework.http.MediaType;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+import org.springframework.validation.beanvalidation.LocalValidatorFactoryBean;
 import org.springframework.web.bind.support.WebDataBinderFactory;
 import org.springframework.web.context.request.NativeWebRequest;
 import org.springframework.web.method.support.HandlerMethodArgumentResolver;
@@ -75,8 +76,11 @@ class ThongBaoControllerTest {
             }
         };
 
+        LocalValidatorFactoryBean validator = new LocalValidatorFactoryBean();
+        validator.afterPropertiesSet();
         mockMvc = MockMvcBuilders.standaloneSetup(thongBaoController)
                 .setControllerAdvice(new GlobalExceptionHandler())
+                .setValidator(validator)
                 .setCustomArgumentResolvers(authPrincipalResolver)
                 .build();
     }
@@ -86,7 +90,7 @@ class ThongBaoControllerTest {
         PageResponse<ThongBaoResponse> pageResponse = new PageResponse<>(
                 List.of(sampleResponse), 0, 10, 1, 1
         );
-        when(thongBaoService.findThongBao(any(), any(Pageable.class))).thenReturn(pageResponse);
+        when(thongBaoService.findThongBao(any(Pageable.class))).thenReturn(pageResponse);
 
         mockMvc.perform(get("/api/v1/thong-bao")
                         .param("page", "0")
@@ -96,16 +100,6 @@ class ThongBaoControllerTest {
                 .andExpect(jsonPath("$.data.content[0].id").value(1L))
                 .andExpect(jsonPath("$.data.content[0].tenThongBao").value("Lịch nghỉ lễ cuối năm"))
                 .andExpect(jsonPath("$.data.content[0].nguoiTaoTen").value("Nguyễn Thành Long"));
-    }
-
-    @Test
-    void findTopThongBaoMoiNhat_traVe200VaDanhSach() throws Exception {
-        when(thongBaoService.findTopThongBaoMoiNhat(5)).thenReturn(List.of(sampleResponse));
-
-        mockMvc.perform(get("/api/v1/thong-bao/moi-nhat").param("limit", "5"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.data[0].id").value(1L));
     }
 
     @Test
@@ -148,7 +142,8 @@ class ThongBaoControllerTest {
                         .content(json))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.data.id").value(1L));
+                .andExpect(jsonPath("$.data.id").value(1L))
+                .andExpect(jsonPath("$.message").value("Thêm thông báo thành công"));
     }
 
     @Test
@@ -185,7 +180,8 @@ class ThongBaoControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(json))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.success").value(true));
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.message").value("Sửa thông báo thành công"));
     }
 
     @Test
@@ -194,6 +190,59 @@ class ThongBaoControllerTest {
 
         mockMvc.perform(delete("/api/v1/thong-bao/1"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.success").value(true));
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.message").value("Xóa thành công"));
+    }
+
+    @Test
+    void findThongBao_sizeVuot100_traVe400() throws Exception {
+        mockMvc.perform(get("/api/v1/thong-bao").param("size", "101"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.message").value("Giá trị phân trang không hợp lệ"));
+    }
+
+    @Test
+    void createThongBao_thieuNgay_traVe400() throws Exception {
+        String json = """
+                {"tenThongBao":"Tiêu đề","noiDung":"Nội dung"}
+                """;
+        mockMvc.perform(post("/api/v1/thong-bao")
+                        .contentType(MediaType.APPLICATION_JSON).content(json))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.success").value(false));
+    }
+
+    @Test
+    void createThongBao_noiDungQua5000KyTu_traVe400() throws Exception {
+        String longContent = "x".repeat(5001);
+        String json = "{\"ngay\":\"2026-11-11\",\"tenThongBao\":\"Tiêu đề\",\"noiDung\":\"" + longContent + "\"}";
+        mockMvc.perform(post("/api/v1/thong-bao")
+                        .contentType(MediaType.APPLICATION_JSON).content(json))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.message").value("Nội dung thông báo tối đa 5000 ký tự"));
+    }
+
+    @Test
+    void updateThongBao_thieuNgay_traVe400() throws Exception {
+        String json = """
+                {"tenThongBao":"Tiêu đề","noiDung":"Nội dung"}
+                """;
+        mockMvc.perform(put("/api/v1/thong-bao/1")
+                        .contentType(MediaType.APPLICATION_JSON).content(json))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("Chưa nhập đủ thông tin cần thiết"));
+    }
+
+    @Test
+    void deleteThongBao_khongTonTai_traVe404VoiMessageQuyDinh() throws Exception {
+        org.mockito.Mockito.doThrow(new NotFoundException("Không tồn tại dữ liệu để xóa"))
+                .when(thongBaoService).deleteThongBao(999L);
+
+        mockMvc.perform(delete("/api/v1/thong-bao/999"))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.message").value("Không tồn tại dữ liệu để xóa"));
     }
 }
