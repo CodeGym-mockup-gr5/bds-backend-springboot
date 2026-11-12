@@ -5,16 +5,22 @@ import static org.hamcrest.Matchers.everyItem;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.nullValue;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.authentication;
 import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.codegym.bds_backend.auth.JwtPrincipal;
+import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.request.RequestPostProcessor;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.WebApplicationContext;
 
@@ -22,6 +28,7 @@ import org.springframework.web.context.WebApplicationContext;
 class BatDongSanControllerIntegrationTest {
 
     private static final String URL = "/api/v1/bat-dong-san";
+    private static final String ROLE_KHACH_HANG = "ROLE_KHACH_HANG";
 
     private MockMvc mockMvc;
 
@@ -84,8 +91,8 @@ class BatDongSanControllerIntegrationTest {
     }
 
     @Test
-    @WithMockUser(roles = "NHAN_VIEN")
-    void shouldFilterByOwnerWhenKhachHangIdIsGiven() throws Exception {
+    @WithMockUser(roles = {"NHAN_VIEN", "ADMIN"})
+    void shouldFilterByOwnerWhenAdminGivesKhachHangId() throws Exception {
         mockMvc.perform(get(URL).param("khachHangId", "210"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.content[*].maBds", containsInAnyOrder("BDS309", "BDS310")));
@@ -100,7 +107,7 @@ class BatDongSanControllerIntegrationTest {
     }
 
     @Test
-    @WithMockUser(roles = "NHAN_VIEN")
+    @WithMockUser(roles = {"NHAN_VIEN", "ADMIN"})
     void shouldUseLowestOrderImageAsThumbnailWhenSearching() throws Exception {
         mockMvc.perform(get(URL).param("khachHangId", "201").param("sort", "id,asc"))
                 .andExpect(status().isOk())
@@ -185,5 +192,45 @@ class BatDongSanControllerIntegrationTest {
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.message", is("Giá trị không hợp lệ")))
                 .andExpect(jsonPath("$.errors[0].field", is("id")));
+    }
+
+    @Test
+    @WithMockUser(roles = "NHAN_VIEN")
+    void shouldShowOwnerAndFilterByOwnerWhenStaffSearches() throws Exception {
+        mockMvc.perform(get(URL).param("khachHangId", "210"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.content[*].maBds", containsInAnyOrder("BDS309", "BDS310")))
+                .andExpect(jsonPath("$.data.content[*].maKh", everyItem(is("KH210"))))
+                .andExpect(jsonPath("$.data.content[*].tenChuSoHuu", everyItem(is("Đỗ Minh Khoa"))));
+    }
+
+    @Test
+    void shouldShowOwnerOnlyForOwnPropertyWhenCustomerViewsDetail() throws Exception {
+        mockMvc.perform(get(URL + "/301").with(khachHang201()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.tinhTrang", is("DA_BAN")))
+                .andExpect(jsonPath("$.data.chuSoHuu.maKh", is("KH201")));
+
+        mockMvc.perform(get(URL + "/303").with(khachHang201()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.chuSoHuu", nullValue()));
+    }
+
+    @Test
+    void shouldFilterOnlyOwnPropertiesWhenCustomerGivesKhachHangId() throws Exception {
+        mockMvc.perform(get(URL).param("khachHangId", "201").with(khachHang201()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.content[*].maBds", containsInAnyOrder("BDS306")))
+                .andExpect(jsonPath("$.data.content[0].maKh", is("KH201")));
+
+        mockMvc.perform(get(URL).param("khachHangId", "203").with(khachHang201()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.totalElements", is(8)));
+    }
+
+    private static RequestPostProcessor khachHang201() {
+        JwtPrincipal principal = new JwtPrincipal(201L, "kh201", List.of(ROLE_KHACH_HANG));
+        return authentication(new UsernamePasswordAuthenticationToken(
+                principal, null, List.of(new SimpleGrantedAuthority(ROLE_KHACH_HANG))));
     }
 }

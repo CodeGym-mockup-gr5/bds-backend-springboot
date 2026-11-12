@@ -48,23 +48,44 @@ public class BatDongSanService {
 
         PageRequest pageRequest = PageRequest.of(resolvePage(request), resolveSize(request), buildSort(request.sort()));
         boolean laNoiBo = currentUser.isAdminOrNhanVien();
+        Long khachHangDangNhapId = currentUser.findKhachHangId().orElse(null);
         TinhTrangBds tinhTrang = laNoiBo ? request.tinhTrang() : TinhTrangBds.CO_SAN;
-        Long khachHangId = laNoiBo ? request.khachHangId() : null;
+        Long khachHangId = resolveKhachHangFilter(request.khachHangId(), laNoiBo, khachHangDangNhapId);
 
         Page<BatDongSan> page = batDongSanRepository.findAll(
                 BatDongSanSpecifications.filterBatDongSan(request, tinhTrang, khachHangId), pageRequest);
         Map<Long, String> anhDaiDien = findAnhDaiDien(page.getContent());
 
-        return PageResponse.of(page.map(bds ->
-                batDongSanMapper.toListItemResponse(bds, anhDaiDien.get(bds.getId()), laNoiBo)));
+        return PageResponse.of(page.map(bds -> batDongSanMapper.toListItemResponse(
+                bds, anhDaiDien.get(bds.getId()), canViewChuSoHuu(bds, laNoiBo, khachHangDangNhapId))));
     }
 
     public BatDongSanDetailResponse getChiTietBatDongSan(Long id) {
         boolean laNoiBo = currentUser.isAdminOrNhanVien();
+        Long khachHangDangNhapId = currentUser.findKhachHangId().orElse(null);
         BatDongSan bds = batDongSanRepository.findWithChiTietById(id)
-                .filter(found -> laNoiBo || found.getTinhTrang() == TinhTrangBds.CO_SAN)
+                .filter(found -> laNoiBo
+                        || found.getTinhTrang() == TinhTrangBds.CO_SAN
+                        || isChuSoHuu(found, khachHangDangNhapId))
                 .orElseThrow(() -> new NotFoundException(MSG_KHONG_TIM_THAY));
-        return batDongSanMapper.toDetailResponse(bds, laNoiBo);
+        return batDongSanMapper.toDetailResponse(bds, canViewChuSoHuu(bds, laNoiBo, khachHangDangNhapId));
+    }
+
+    private Long resolveKhachHangFilter(Long khachHangId, boolean laNoiBo, Long khachHangDangNhapId) {
+        if (laNoiBo || (khachHangId != null && khachHangId.equals(khachHangDangNhapId))) {
+            return khachHangId;
+        }
+        return null;
+    }
+
+    private boolean canViewChuSoHuu(BatDongSan bds, boolean laNoiBo, Long khachHangDangNhapId) {
+        return laNoiBo || isChuSoHuu(bds, khachHangDangNhapId);
+    }
+
+    private boolean isChuSoHuu(BatDongSan bds, Long khachHangDangNhapId) {
+        return khachHangDangNhapId != null
+                && bds.getKhachHang() != null
+                && khachHangDangNhapId.equals(bds.getKhachHang().getId());
     }
 
     private Map<Long, String> findAnhDaiDien(List<BatDongSan> danhSach) {

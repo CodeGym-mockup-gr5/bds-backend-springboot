@@ -28,8 +28,9 @@ public class BatDongSanController {
     @Operation(
             summary = "Xem danh sách bất động sản",
             description = "Lọc theo loại, vị trí, hướng, khoảng diện tích, khoảng giá (VND), chủ sở hữu, từ khóa; "
-                    + "phân trang và sắp xếp. Khách và khách hàng chỉ thấy BĐS có sẵn (CO_SAN), "
-                    + "không thấy thông tin chủ sở hữu và không lọc được theo khachHangId.")
+                    + "phân trang và sắp xếp. Khách và khách hàng chỉ thấy BĐS có sẵn (CO_SAN). "
+                    + "Thông tin chủ sở hữu và lọc theo khachHangId dành cho Admin, nhân viên "
+                    + "hoặc chính khách hàng sở hữu BĐS.")
     @GetMapping
     @PreAuthorize("permitAll()")
     public ApiResponse<PageResponse<BatDongSanListItemResponse>> searchBatDongSan(
@@ -39,8 +40,9 @@ public class BatDongSanController {
 
     @Operation(
             summary = "Xem chi tiết bất động sản",
-            description = "Khách và khách hàng chỉ xem được BĐS có sẵn (CO_SAN) và không thấy thông tin chủ sở hữu. "
-                    + "Admin và nhân viên xem được mọi BĐS kèm thông tin chủ sở hữu.")
+            description = "Khách chỉ xem được BĐS có sẵn (CO_SAN); nhân viên và Admin xem được mọi BĐS; "
+                    + "khách hàng xem được BĐS của chính mình. Thông tin chủ sở hữu trả cho Admin, nhân viên "
+                    + "hoặc chính khách hàng sở hữu BĐS.")
     @GetMapping("/{id}")
     @PreAuthorize("permitAll()")
     public ApiResponse<BatDongSanDetailResponse> getChiTietBatDongSan(
