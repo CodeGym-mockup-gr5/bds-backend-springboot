@@ -22,6 +22,8 @@ public interface NhanVienRepository extends JpaRepository<NhanVien, Long> {
 
     boolean existsByLaAdminTrue();
 
+    long countByLaAdminTrue();
+
     @Query("SELECT nv FROM NhanVien nv "
             + "WHERE (:maNv IS NULL OR LOWER(nv.maNv) LIKE LOWER(CONCAT('%', :maNv, '%'))) "
             + "AND (:hoTen IS NULL OR LOWER(nv.hoTen) LIKE LOWER(CONCAT('%', :hoTen, '%'))) "

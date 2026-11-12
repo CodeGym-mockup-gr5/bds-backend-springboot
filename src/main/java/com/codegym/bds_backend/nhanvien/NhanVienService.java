@@ -88,7 +88,7 @@ public class NhanVienService {
     }
 
     @Transactional
-    public NhanVienResponse updateNhanVien(Long id, UpdateNhanVienRequest request) {
+    public NhanVienResponse updateNhanVien(Long id, UpdateNhanVienRequest request, JwtPrincipal principal) {
         NhanVien nv = nhanVienRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Không tìm thấy nhân viên"));
 
@@ -116,6 +116,7 @@ public class NhanVienService {
         nv.setDiaChi(request.diaChi().trim());
         nv.setChucVu(request.chucVu());
         if (request.laAdmin() != null) {
+            validateThayDoiQuyenAdmin(nv, request.laAdmin(), principal);
             nv.setLaAdmin(request.laAdmin());
         }
 
@@ -139,5 +140,31 @@ public class NhanVienService {
 
         nhanVienRepository.delete(nv);
         log.info("Xóa mềm nhân viên thành công, id: {}", id);
+    }
+
+    private void validateThayDoiQuyenAdmin(NhanVien nv, boolean laAdminMoi, JwtPrincipal principal) {
+        boolean dangHaQuyen = nv.isLaAdmin() && !laAdminMoi;
+        if (!dangHaQuyen) {
+            return;
+        }
+        validateKhongTuHaQuyenChinhMinh(nv, principal);
+        validateKhongHaQuyenAdminCuoiCung();
+    }
+
+    private void validateKhongTuHaQuyenChinhMinh(NhanVien nv, JwtPrincipal principal) {
+        if (principal == null || principal.userId() == null) {
+            return;
+        }
+        taiKhoanRepository.findWithChuSoHuuById(principal.userId()).ifPresent(tk -> {
+            if (tk.getNhanVien() != null && tk.getNhanVien().getId().equals(nv.getId())) {
+                throw new BusinessException("Admin không thể tự hạ quyền Admin của chính mình");
+            }
+        });
+    }
+
+    private void validateKhongHaQuyenAdminCuoiCung() {
+        if (nhanVienRepository.countByLaAdminTrue() <= 1) {
+            throw new BusinessException("Không thể bỏ quyền Admin cuối cùng của hệ thống");
+        }
     }
 }

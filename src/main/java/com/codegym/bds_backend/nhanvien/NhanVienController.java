@@ -72,8 +72,11 @@ public class NhanVienController {
     @Operation(summary = "Cập nhật thông tin nhân viên")
     public ApiResponse<NhanVienResponse> putCapNhatNhanVien(
             @PathVariable Long id,
-            @Valid @RequestBody UpdateNhanVienRequest request) {
-        return ApiResponse.ok(nhanVienService.updateNhanVien(id, request), "Cập nhật thông tin nhân viên thành công");
+            @Valid @RequestBody UpdateNhanVienRequest request,
+            @AuthenticationPrincipal JwtPrincipal principal) {
+        return ApiResponse.ok(
+                nhanVienService.updateNhanVien(id, request, principal),
+                "Cập nhật thông tin nhân viên thành công");
     }
 
     @DeleteMapping("/{id}")
