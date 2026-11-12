@@ -1,5 +1,6 @@
 package com.codegym.bds_backend.thongbao;
 
+import com.codegym.bds_backend.thongbao.dto.ThongBaoPublicResponse;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -69,6 +70,20 @@ class ThongBaoServiceTest {
         assertEquals(1, response.content().size());
         assertEquals("Thông báo lễ Quốc khánh", response.content().get(0).tenThongBao());
         assertEquals("Nguyễn Thành Long", response.content().get(0).nguoiTaoTen());
+    }
+
+    @Test
+    void findTopThongBaoMoiNhat_traVeDanhSachPublicResponse() {
+        Pageable pageable = PageRequest.of(0, 5);
+        Page<ThongBao> page = new PageImpl<>(List.of(thongBao), pageable, 1);
+        when(thongBaoRepository.findAllByOrderByNgayDescIdDesc(pageable)).thenReturn(page);
+
+        List<ThongBaoPublicResponse> result = thongBaoService.findTopThongBaoMoiNhat(5);
+
+        assertEquals(1, result.size());
+        assertEquals(1L, result.get(0).id());
+        assertEquals("Thông báo lễ Quốc khánh", result.get(0).tenThongBao());
+        assertEquals("Nghỉ lễ theo lịch nhà nước", result.get(0).noiDung());
     }
 
     @Test

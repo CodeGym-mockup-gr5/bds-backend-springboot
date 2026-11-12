@@ -1,14 +1,17 @@
 package com.codegym.bds_backend.thongbao;
 
 import com.codegym.bds_backend.auth.JwtPrincipal;
+import com.codegym.bds_backend.common.exception.BusinessException;
 import com.codegym.bds_backend.common.response.ApiResponse;
 import com.codegym.bds_backend.common.response.PageResponse;
 import com.codegym.bds_backend.thongbao.dto.CreateThongBaoRequest;
+import com.codegym.bds_backend.thongbao.dto.ThongBaoPublicResponse;
 import com.codegym.bds_backend.thongbao.dto.ThongBaoResponse;
 import com.codegym.bds_backend.thongbao.dto.UpdateThongBaoRequest;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
@@ -28,7 +31,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/v1/thong-bao")
 @RequiredArgsConstructor
-@Tag(name = "Thông báo", description = "Quản trị viên quản lý thông báo")
+@Tag(name = "Thông báo", description = "Hiển thị thông báo trên trang chủ và quản lý thông báo")
 public class ThongBaoController {
     private final ThongBaoService thongBaoService;
 
@@ -40,6 +43,13 @@ public class ThongBaoController {
             @RequestParam(defaultValue = "10") int size) {
         validatePagination(page, size);
         return ApiResponse.ok(thongBaoService.findThongBao(PageRequest.of(page, size)));
+    }
+
+    @GetMapping("/moi-nhat")
+    @Operation(summary = "Lấy danh sách thông báo mới nhất phục vụ hiển thị widget trang chủ")
+    public ApiResponse<List<ThongBaoPublicResponse>> findTopThongBaoMoiNhat(
+            @RequestParam(defaultValue = "5") int limit) {
+        return ApiResponse.ok(thongBaoService.findTopThongBaoMoiNhat(limit));
     }
 
     @GetMapping("/{id}")
@@ -79,8 +89,7 @@ public class ThongBaoController {
 
     private void validatePagination(int page, int size) {
         if (page < 0 || size < 1 || size > 100) {
-            throw new com.codegym.bds_backend.common.exception.BusinessException(
-                    HttpStatus.BAD_REQUEST, "Giá trị phân trang không hợp lệ");
+            throw new BusinessException(HttpStatus.BAD_REQUEST, "Giá trị phân trang không hợp lệ");
         }
     }
 }

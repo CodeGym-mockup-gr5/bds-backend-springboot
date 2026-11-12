@@ -7,11 +7,14 @@ import com.codegym.bds_backend.common.exception.NotFoundException;
 import com.codegym.bds_backend.common.response.PageResponse;
 import com.codegym.bds_backend.nhanvien.NhanVien;
 import com.codegym.bds_backend.thongbao.dto.CreateThongBaoRequest;
+import com.codegym.bds_backend.thongbao.dto.ThongBaoPublicResponse;
 import com.codegym.bds_backend.thongbao.dto.ThongBaoResponse;
 import com.codegym.bds_backend.thongbao.dto.UpdateThongBaoRequest;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -34,6 +37,15 @@ public class ThongBaoService {
         ThongBao thongBao = thongBaoRepository.findWithNguoiTaoById(id)
                 .orElseThrow(() -> new NotFoundException("Không tìm thấy thông báo với mã " + id));
         return ThongBaoResponse.fromEntity(thongBao);
+    }
+
+    public List<ThongBaoPublicResponse> findTopThongBaoMoiNhat(int limit) {
+        int safeLimit = Math.max(1, Math.min(limit, 50));
+        return thongBaoRepository.findAllByOrderByNgayDescIdDesc(PageRequest.of(0, safeLimit))
+                .getContent()
+                .stream()
+                .map(ThongBaoPublicResponse::fromEntity)
+                .toList();
     }
 
     @Transactional

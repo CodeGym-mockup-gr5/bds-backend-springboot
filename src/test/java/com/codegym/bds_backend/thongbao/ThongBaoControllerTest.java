@@ -1,5 +1,6 @@
 package com.codegym.bds_backend.thongbao;
 
+import com.codegym.bds_backend.thongbao.dto.ThongBaoPublicResponse;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
@@ -100,6 +101,26 @@ class ThongBaoControllerTest {
                 .andExpect(jsonPath("$.data.content[0].id").value(1L))
                 .andExpect(jsonPath("$.data.content[0].tenThongBao").value("Lịch nghỉ lễ cuối năm"))
                 .andExpect(jsonPath("$.data.content[0].nguoiTaoTen").value("Nguyễn Thành Long"));
+    }
+
+    @Test
+    void findTopThongBaoMoiNhat_congKhai_traVe200VaAnThongTinNguoiTao() throws Exception {
+        ThongBaoPublicResponse publicResponse = new ThongBaoPublicResponse(
+                1L,
+                LocalDate.of(2026, 10, 1),
+                "Lịch nghỉ lễ cuối năm",
+                "Trung tâm thông báo lịch nghỉ lễ..."
+        );
+        when(thongBaoService.findTopThongBaoMoiNhat(5)).thenReturn(List.of(publicResponse));
+
+        mockMvc.perform(get("/api/v1/thong-bao/moi-nhat"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data[0].id").value(1L))
+                .andExpect(jsonPath("$.data[0].tenThongBao").value("Lịch nghỉ lễ cuối năm"))
+                .andExpect(jsonPath("$.data[0].noiDung").value("Trung tâm thông báo lịch nghỉ lễ..."))
+                .andExpect(jsonPath("$.data[0].nguoiTaoId").doesNotExist())
+                .andExpect(jsonPath("$.data[0].nguoiTaoTen").doesNotExist());
     }
 
     @Test
