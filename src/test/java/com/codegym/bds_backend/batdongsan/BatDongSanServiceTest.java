@@ -61,7 +61,6 @@ class BatDongSanServiceTest {
     @Test
     void shouldUseLowestOrderImageAsThumbnailWhenSearching() {
         when(currentUser.isAdminOrNhanVien()).thenReturn(true);
-        when(currentUser.isAdmin()).thenReturn(true);
         Page<BatDongSan> page = new PageImpl<>(
                 List.of(batDongSan(301L, TinhTrangBds.DA_BAN),
                         batDongSan(304L, TinhTrangBds.CO_SAN)),
@@ -81,7 +80,7 @@ class BatDongSanServiceTest {
     }
 
     @Test
-    void shouldHideOwnerWhenStaffIsNotAdmin() {
+    void shouldShowOwnerWhenStaffSearches() {
         when(currentUser.isAdminOrNhanVien()).thenReturn(true);
         Page<BatDongSan> page = new PageImpl<>(
                 List.of(batDongSan(301L, TinhTrangBds.DA_BAN)), PageRequest.of(0, 10), 1);
@@ -91,8 +90,8 @@ class BatDongSanServiceTest {
 
         BatDongSanListItemResponse item = batDongSanService.searchBatDongSan(emptyRequest()).content().get(0);
 
-        assertThat(item.maKh()).isNull();
-        assertThat(item.tenChuSoHuu()).isNull();
+        assertThat(item.maKh()).isEqualTo("KH1301");
+        assertThat(item.tenChuSoHuu()).isEqualTo("Chủ sở hữu 301");
     }
 
     @Test
@@ -197,9 +196,8 @@ class BatDongSanServiceTest {
     }
 
     @Test
-    void shouldReturnOwnerAndOrderedImagesWhenAdminViewsDetail() {
+    void shouldReturnOwnerAndOrderedImagesWhenStaffViewsDetail() {
         when(currentUser.isAdminOrNhanVien()).thenReturn(true);
-        when(currentUser.isAdmin()).thenReturn(true);
         BatDongSan bds = batDongSan(301L, TinhTrangBds.DA_BAN);
         bds.getKhachHang().setSoDienThoai("0987000201");
         bds.getHinhAnh().add(hinhAnh(1L, 301L, 0, "/uploads/bds/301-1.jpg"));
@@ -212,18 +210,6 @@ class BatDongSanServiceTest {
         assertThat(result.hinhAnh()).extracting("thuTu").containsExactly(0, 1);
         assertThat(result.chuSoHuu().hoTen()).isEqualTo("Chủ sở hữu 301");
         assertThat(result.chuSoHuu().soDienThoai()).isEqualTo("0987000201");
-    }
-
-    @Test
-    void shouldHideOwnerWhenStaffViewsDetail() {
-        when(currentUser.isAdminOrNhanVien()).thenReturn(true);
-        when(batDongSanRepository.findWithChiTietById(301L))
-                .thenReturn(Optional.of(batDongSan(301L, TinhTrangBds.DA_BAN)));
-
-        BatDongSanDetailResponse result = batDongSanService.getChiTietBatDongSan(301L);
-
-        assertThat(result.tinhTrang()).isEqualTo(TinhTrangBds.DA_BAN);
-        assertThat(result.chuSoHuu()).isNull();
     }
 
     @Test

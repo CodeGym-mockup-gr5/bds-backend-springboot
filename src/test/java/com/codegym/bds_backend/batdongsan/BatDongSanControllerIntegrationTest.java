@@ -146,8 +146,8 @@ class BatDongSanControllerIntegrationTest {
     }
 
     @Test
-    @WithMockUser(roles = {"NHAN_VIEN", "ADMIN"})
-    void shouldReturnImagesAndOwnerWhenAdminViewsDetail() throws Exception {
+    @WithMockUser(roles = "NHAN_VIEN")
+    void shouldReturnImagesAndOwnerWhenStaffViewsDetail() throws Exception {
         mockMvc.perform(get(URL + "/301"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.maBds", is("BDS301")))
@@ -196,16 +196,12 @@ class BatDongSanControllerIntegrationTest {
 
     @Test
     @WithMockUser(roles = "NHAN_VIEN")
-    void shouldHideOwnerAndIgnoreOwnerFilterWhenStaffSearches() throws Exception {
+    void shouldShowOwnerAndFilterByOwnerWhenStaffSearches() throws Exception {
         mockMvc.perform(get(URL).param("khachHangId", "210"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.totalElements", is(12)))
-                .andExpect(jsonPath("$.data.content[*].maKh", everyItem(nullValue())));
-
-        mockMvc.perform(get(URL + "/301"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.tinhTrang", is("DA_BAN")))
-                .andExpect(jsonPath("$.data.chuSoHuu", nullValue()));
+                .andExpect(jsonPath("$.data.content[*].maBds", containsInAnyOrder("BDS309", "BDS310")))
+                .andExpect(jsonPath("$.data.content[*].maKh", everyItem(is("KH210"))))
+                .andExpect(jsonPath("$.data.content[*].tenChuSoHuu", everyItem(is("Đỗ Minh Khoa"))));
     }
 
     @Test

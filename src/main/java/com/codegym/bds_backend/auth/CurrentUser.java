@@ -26,10 +26,6 @@ public class CurrentUser {
                 .orElse(false);
     }
 
-    public boolean isAdmin() {
-        return hasAuthority(VaiTro.ADMIN.authority());
-    }
-
     public Optional<Long> findKhachHangId() {
         if (!hasAuthority(VaiTro.KHACH_HANG.authority())) {
             return Optional.empty();

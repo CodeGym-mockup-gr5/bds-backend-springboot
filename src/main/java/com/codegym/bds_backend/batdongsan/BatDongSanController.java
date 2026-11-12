@@ -29,7 +29,7 @@ public class BatDongSanController {
             summary = "Xem danh sách bất động sản",
             description = "Lọc theo loại, vị trí, hướng, khoảng diện tích, khoảng giá (VND), chủ sở hữu, từ khóa; "
                     + "phân trang và sắp xếp. Khách và khách hàng chỉ thấy BĐS có sẵn (CO_SAN). "
-                    + "Thông tin chủ sở hữu và lọc theo khachHangId chỉ dành cho Admin "
+                    + "Thông tin chủ sở hữu và lọc theo khachHangId dành cho Admin, nhân viên "
                     + "hoặc chính khách hàng sở hữu BĐS.")
     @GetMapping
     @PreAuthorize("permitAll()")
@@ -41,7 +41,7 @@ public class BatDongSanController {
     @Operation(
             summary = "Xem chi tiết bất động sản",
             description = "Khách chỉ xem được BĐS có sẵn (CO_SAN); nhân viên và Admin xem được mọi BĐS; "
-                    + "khách hàng xem được BĐS của chính mình. Thông tin chủ sở hữu chỉ trả cho Admin "
+                    + "khách hàng xem được BĐS của chính mình. Thông tin chủ sở hữu trả cho Admin, nhân viên "
                     + "hoặc chính khách hàng sở hữu BĐS.")
     @GetMapping("/{id}")
     @PreAuthorize("permitAll()")
