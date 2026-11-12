@@ -68,7 +68,9 @@ public class BatDongSanService {
                         || found.getTinhTrang() == TinhTrangBds.CO_SAN
                         || isChuSoHuu(found, khachHangDangNhapId))
                 .orElseThrow(() -> new NotFoundException(MSG_KHONG_TIM_THAY));
-        return batDongSanMapper.toDetailResponse(bds, canViewChuSoHuu(bds, laNoiBo, khachHangDangNhapId));
+        boolean hienSoDienThoai = currentUser.isAdmin() || isChuSoHuu(bds, khachHangDangNhapId);
+        return batDongSanMapper.toDetailResponse(
+                bds, canViewChuSoHuu(bds, laNoiBo, khachHangDangNhapId), hienSoDienThoai);
     }
 
     private Long resolveKhachHangFilter(Long khachHangId, boolean laNoiBo, Long khachHangDangNhapId) {

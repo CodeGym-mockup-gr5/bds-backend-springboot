@@ -147,7 +147,7 @@ class BatDongSanControllerIntegrationTest {
 
     @Test
     @WithMockUser(roles = "NHAN_VIEN")
-    void shouldReturnImagesAndOwnerWhenStaffViewsDetail() throws Exception {
+    void shouldHideOwnerPhoneWhenStaffViewsDetail() throws Exception {
         mockMvc.perform(get(URL + "/301"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.maBds", is("BDS301")))
@@ -156,7 +156,7 @@ class BatDongSanControllerIntegrationTest {
                 .andExpect(jsonPath("$.data.hinhAnh[0].duongDan", is("/uploads/bds/301-1.jpg")))
                 .andExpect(jsonPath("$.data.hinhAnh[1].thuTu", is(1)))
                 .andExpect(jsonPath("$.data.chuSoHuu.maKh", is("KH201")))
-                .andExpect(jsonPath("$.data.chuSoHuu.soDienThoai", is("0987000201")));
+                .andExpect(jsonPath("$.data.chuSoHuu.soDienThoai", nullValue()));
     }
 
     @Test
