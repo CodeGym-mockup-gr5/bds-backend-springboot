@@ -3,6 +3,7 @@ package com.codegym.bds_backend.thongbao;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -148,7 +149,8 @@ class ThongBaoControllerTest {
                         .content(json))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.data.id").value(1L));
+                .andExpect(jsonPath("$.data.id").value(1L))
+                .andExpect(jsonPath("$.message").value("Thêm thông báo thành công!"));
     }
 
     @Test
@@ -169,6 +171,36 @@ class ThongBaoControllerTest {
     }
 
     @Test
+    void createThongBao_thieuNgay_traVe400() throws Exception {
+        String json = """
+                {
+                    "tenThongBao": "Tiêu đề",
+                    "noiDung": "Nội dung"
+                }
+                """;
+
+        mockMvc.perform(post("/api/v1/thong-bao")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(json))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.message").value("Chưa nhập đủ thông tin cần thiết"));
+    }
+
+    @Test
+    void createThongBao_noiDungQua5000KyTu_traVe400() throws Exception {
+        String json = "{\"ngay\":\"2026-11-11\",\"tenThongBao\":\"Tiêu đề\",\"noiDung\":\""
+                + "x".repeat(5001) + "\"}";
+
+        mockMvc.perform(post("/api/v1/thong-bao")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(json))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.message").value("Nội dung thông báo tối đa 5000 ký tự"));
+    }
+
+    @Test
     void updateThongBao_hopLe_traVe200() throws Exception {
         when(thongBaoService.updateThongBao(eq(1L), any(UpdateThongBaoRequest.class)))
                 .thenReturn(sampleResponse);
@@ -185,7 +217,25 @@ class ThongBaoControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(json))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.success").value(true));
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.message").value("Sửa thông báo thành công!"));
+    }
+
+    @Test
+    void updateThongBao_thieuNgay_traVe400() throws Exception {
+        String json = """
+                {
+                    "tenThongBao": "Tiêu đề",
+                    "noiDung": "Nội dung"
+                }
+                """;
+
+        mockMvc.perform(put("/api/v1/thong-bao/1")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(json))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.message").value("Chưa nhập đủ thông tin cần thiết"));
     }
 
     @Test
@@ -194,6 +244,18 @@ class ThongBaoControllerTest {
 
         mockMvc.perform(delete("/api/v1/thong-bao/1"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.success").value(true));
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.message").value("Xóa thành công"));
+    }
+
+    @Test
+    void deleteThongBao_khongTonTai_traVe404VoiMessageQuyDinh() throws Exception {
+        doThrow(new NotFoundException("Không tồn tại dữ liệu để xóa"))
+                .when(thongBaoService).deleteThongBao(999L);
+
+        mockMvc.perform(delete("/api/v1/thong-bao/999"))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.message").value("Không tồn tại dữ liệu để xóa"));
     }
 }

@@ -120,6 +120,7 @@ class ThongBaoServiceTest {
         assertNotNull(response);
         assertEquals(2L, response.id());
         assertEquals("Thông báo mới", response.tenThongBao());
+        assertEquals(LocalDate.of(2026, 9, 2), response.ngay());
         assertEquals(101L, response.nguoiTaoId());
         verify(thongBaoRepository).save(any(ThongBao.class));
     }
@@ -150,6 +151,7 @@ class ThongBaoServiceTest {
 
         assertEquals("Tiêu đề cập nhật", response.tenThongBao());
         assertEquals("Nội dung mới", response.noiDung());
+        assertEquals(LocalDate.of(2026, 9, 3), response.ngay());
         verify(thongBaoRepository).save(thongBao);
     }
 
@@ -160,5 +162,15 @@ class ThongBaoServiceTest {
         thongBaoService.deleteThongBao(1L);
 
         verify(thongBaoRepository).delete(thongBao);
+    }
+
+    @Test
+    void deleteThongBao_khongTonTai_nemNotFoundVoiMessageQuyDinh() {
+        when(thongBaoRepository.findById(999L)).thenReturn(Optional.empty());
+
+        NotFoundException exception = assertThrows(
+                NotFoundException.class, () -> thongBaoService.deleteThongBao(999L));
+
+        assertEquals("Không tồn tại dữ liệu để xóa", exception.getMessage());
     }
 }

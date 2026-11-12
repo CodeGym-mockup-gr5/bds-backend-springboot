@@ -63,7 +63,7 @@ public class ThongBaoController {
             @AuthenticationPrincipal JwtPrincipal principal) {
         ThongBaoResponse response = thongBaoService.createThongBao(request, principal.userId());
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(ApiResponse.ok(response, "Tạo thông báo thành công"));
+                .body(ApiResponse.ok(response, "Thêm thông báo thành công!"));
     }
 
     @PutMapping("/{id}")
@@ -72,7 +72,7 @@ public class ThongBaoController {
     public ApiResponse<ThongBaoResponse> updateThongBao(
             @PathVariable Long id,
             @Valid @RequestBody UpdateThongBaoRequest request) {
-        return ApiResponse.ok(thongBaoService.updateThongBao(id, request), "Cập nhật thông báo thành công");
+        return ApiResponse.ok(thongBaoService.updateThongBao(id, request), "Sửa thông báo thành công!");
     }
 
     @DeleteMapping("/{id}")
@@ -80,6 +80,6 @@ public class ThongBaoController {
     @Operation(summary = "Xóa mềm thông báo (Dành cho Admin)")
     public ApiResponse<Void> deleteThongBao(@PathVariable Long id) {
         thongBaoService.deleteThongBao(id);
-        return ApiResponse.ok(null, "Xóa thông báo thành công");
+        return ApiResponse.ok(null, "Xóa thành công");
     }
 }

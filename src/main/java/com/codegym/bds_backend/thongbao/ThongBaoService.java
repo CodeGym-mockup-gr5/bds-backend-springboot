@@ -9,7 +9,6 @@ import com.codegym.bds_backend.nhanvien.NhanVien;
 import com.codegym.bds_backend.thongbao.dto.CreateThongBaoRequest;
 import com.codegym.bds_backend.thongbao.dto.ThongBaoResponse;
 import com.codegym.bds_backend.thongbao.dto.UpdateThongBaoRequest;
-import java.time.LocalDate;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -60,7 +59,7 @@ public class ThongBaoService {
         ThongBao thongBao = new ThongBao();
         thongBao.setTenThongBao(request.tenThongBao().trim());
         thongBao.setNoiDung(request.noiDung().trim());
-        thongBao.setNgay(request.ngay() != null ? request.ngay() : LocalDate.now());
+        thongBao.setNgay(request.ngay());
         thongBao.setNguoiTao(nhanVien);
 
         ThongBao saved = thongBaoRepository.save(thongBao);
@@ -75,9 +74,7 @@ public class ThongBaoService {
 
         thongBao.setTenThongBao(request.tenThongBao().trim());
         thongBao.setNoiDung(request.noiDung().trim());
-        if (request.ngay() != null) {
-            thongBao.setNgay(request.ngay());
-        }
+        thongBao.setNgay(request.ngay());
 
         ThongBao updated = thongBaoRepository.save(thongBao);
         log.info("Cập nhật thông báo id={}", updated.getId());
@@ -87,7 +84,7 @@ public class ThongBaoService {
     @Transactional
     public void deleteThongBao(Long id) {
         ThongBao thongBao = thongBaoRepository.findById(id)
-                .orElseThrow(() -> new NotFoundException("Không tìm thấy thông báo với mã " + id));
+                .orElseThrow(() -> new NotFoundException("Không tồn tại dữ liệu để xóa"));
         thongBaoRepository.delete(thongBao);
         log.info("Xóa thông báo id={}", id);
     }
