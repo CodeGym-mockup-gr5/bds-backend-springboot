@@ -54,13 +54,15 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 
-                        .requestMatchers("/api/v1/auth/me", "/api/v1/auth/logout").authenticated()
+                        .requestMatchers("/api/v1/auth/me", "/api/v1/auth/logout", "/api/v1/auth/change-password")
+                                .authenticated()
                         .requestMatchers("/api/v1/auth/**").permitAll()
                         .requestMatchers("/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**").permitAll()
 
                         .requestMatchers("/api/v1/bat-dong-san/moi-dang").hasRole("ADMIN")
 
                         .requestMatchers(HttpMethod.GET, "/api/v1/bat-dong-san/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/thong-bao/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/ho-tro/**").permitAll()
                         .anyRequest().authenticated())
                 .exceptionHandling(ex -> ex

@@ -12,11 +12,14 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.codegym.bds_backend.auth.dto.ChangePasswordRequest;
 import com.codegym.bds_backend.auth.dto.LoginRequest;
 import com.codegym.bds_backend.auth.dto.LoginResponse;
 import com.codegym.bds_backend.auth.dto.RegisterRequest;
 import com.codegym.bds_backend.auth.dto.ThongTinTaiKhoan;
+import com.codegym.bds_backend.common.exception.BadRequestException;
 import com.codegym.bds_backend.common.exception.BusinessException;
+import com.codegym.bds_backend.common.exception.NotFoundException;
 import com.codegym.bds_backend.config.AppProperties;
 import com.codegym.bds_backend.khachhang.KhachHang;
 import com.codegym.bds_backend.khachhang.KhachHangRepository;
@@ -214,6 +217,73 @@ class AuthServiceTest {
 
         verify(tokenBlacklistService, never()).revokeToken(any(), any());
         assertNull(SecurityContextHolder.getContext().getAuthentication());
+    }
+
+    @Test
+    void shouldChangePasswordSuccessfully() {
+        TaiKhoan taiKhoan = taiKhoanNhanVien(2, false);
+        when(taiKhoanRepository.findById(1L)).thenReturn(Optional.of(taiKhoan));
+        when(passwordEncoder.matches("OldPass123", "hash")).thenReturn(true);
+        when(passwordEncoder.matches("NewPass123", "hash")).thenReturn(false);
+        when(passwordEncoder.encode("NewPass123")).thenReturn("new-hash");
+
+        ChangePasswordRequest request = new ChangePasswordRequest("OldPass123", "NewPass123", "NewPass123");
+
+        service.changePasswordTaiKhoan(1L, request);
+
+        assertEquals("new-hash", taiKhoan.getMatKhauHash());
+        assertEquals(0, taiKhoan.getSoLanDangNhapSai());
+        assertFalse(taiKhoan.isBiKhoa());
+        verify(taiKhoanRepository).save(taiKhoan);
+    }
+
+    @Test
+    void shouldThrowBadRequestExceptionWhenConfirmPasswordDoesNotMatch() {
+        ChangePasswordRequest request = new ChangePasswordRequest("OldPass123", "NewPass123", "MismatchPass");
+        TaiKhoan taiKhoan = taiKhoanNhanVien(0, false);
+        when(taiKhoanRepository.findById(1L)).thenReturn(Optional.of(taiKhoan));
+
+        BadRequestException ex = assertThrows(
+                BadRequestException.class, () -> service.changePasswordTaiKhoan(1L, request));
+        assertEquals("Mật khẩu mới phải từ 6 đến 32 ký tự và khớp nhau", ex.getMessage());
+        verify(taiKhoanRepository, never()).save(any());
+    }
+
+    @Test
+    void shouldThrowBusinessExceptionWhenOldPasswordIsIncorrect() {
+        TaiKhoan taiKhoan = taiKhoanNhanVien(0, false);
+        when(taiKhoanRepository.findById(1L)).thenReturn(Optional.of(taiKhoan));
+        when(passwordEncoder.matches("WrongOldPass", "hash")).thenReturn(false);
+
+        ChangePasswordRequest request = new ChangePasswordRequest("WrongOldPass", "NewPass123", "NewPass123");
+
+        BusinessException ex = assertThrows(
+                BusinessException.class, () -> service.changePasswordTaiKhoan(1L, request));
+        assertEquals("Mật khẩu cũ không đúng", ex.getMessage());
+        verify(taiKhoanRepository, never()).save(any());
+    }
+
+    @Test
+    void shouldThrowBusinessExceptionWhenNewPasswordMatchesOldPassword() {
+        TaiKhoan taiKhoan = taiKhoanNhanVien(0, false);
+        when(taiKhoanRepository.findById(1L)).thenReturn(Optional.of(taiKhoan));
+        when(passwordEncoder.matches("SamePass123", "hash")).thenReturn(true);
+
+        ChangePasswordRequest request = new ChangePasswordRequest("SamePass123", "SamePass123", "SamePass123");
+
+        BusinessException ex = assertThrows(
+                BusinessException.class, () -> service.changePasswordTaiKhoan(1L, request));
+        assertEquals("Mật khẩu mới không được trùng với mật khẩu cũ", ex.getMessage());
+        verify(taiKhoanRepository, never()).save(any());
+    }
+
+    @Test
+    void shouldThrowNotFoundExceptionWhenAccountDoesNotExist() {
+        when(taiKhoanRepository.findById(999L)).thenReturn(Optional.empty());
+
+        ChangePasswordRequest request = new ChangePasswordRequest("OldPass123", "NewPass123", "NewPass123");
+
+        assertThrows(NotFoundException.class, () -> service.changePasswordTaiKhoan(999L, request));
     }
 
     private static RegisterRequest request() {
