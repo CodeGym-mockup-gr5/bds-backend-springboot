@@ -34,7 +34,9 @@ public class ThongBaoController {
     private final ThongBaoService thongBaoService;
 
     @GetMapping
-    @Operation(summary = "Lấy danh sách thông báo phân trang, hỗ trợ tìm kiếm theo từ khóa tiêu đề")
+    @PreAuthorize("hasAnyRole('ADMIN', 'NHAN_VIEN')")
+    @Operation(summary = "Lấy danh sách thông báo phân trang, hỗ trợ tìm kiếm theo từ khóa tiêu đề "
+            + "(Dành cho Admin và Nhân viên)")
     public ApiResponse<PageResponse<ThongBaoResponse>> findThongBao(
             @RequestParam(required = false) String tuKhoa,
             @RequestParam(defaultValue = "0") int page,
@@ -43,14 +45,17 @@ public class ThongBaoController {
     }
 
     @GetMapping("/moi-nhat")
-    @Operation(summary = "Lấy danh sách thông báo mới nhất phục vụ hiển thị widget trang chủ")
+    @PreAuthorize("hasAnyRole('ADMIN', 'NHAN_VIEN')")
+    @Operation(summary = "Lấy danh sách thông báo mới nhất phục vụ hiển thị widget trang chủ "
+            + "(Dành cho Admin và Nhân viên)")
     public ApiResponse<List<ThongBaoResponse>> findTopThongBaoMoiNhat(
             @RequestParam(defaultValue = "5") int limit) {
         return ApiResponse.ok(thongBaoService.findTopThongBaoMoiNhat(limit));
     }
 
     @GetMapping("/{id}")
-    @Operation(summary = "Xem chi tiết một thông báo theo mã ID")
+    @PreAuthorize("hasAnyRole('ADMIN', 'NHAN_VIEN')")
+    @Operation(summary = "Xem chi tiết một thông báo theo mã ID (Dành cho Admin và Nhân viên)")
     public ApiResponse<ThongBaoResponse> findThongBaoById(@PathVariable Long id) {
         return ApiResponse.ok(thongBaoService.findThongBaoById(id));
     }

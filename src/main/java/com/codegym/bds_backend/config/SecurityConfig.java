@@ -62,7 +62,6 @@ public class SecurityConfig {
                         .requestMatchers("/api/v1/bat-dong-san/moi-dang").hasRole("ADMIN")
 
                         .requestMatchers(HttpMethod.GET, "/api/v1/bat-dong-san/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/v1/thong-bao/**").permitAll()
                         .anyRequest().authenticated())
                 .exceptionHandling(ex -> ex
                         .authenticationEntryPoint((req, res, e) ->
