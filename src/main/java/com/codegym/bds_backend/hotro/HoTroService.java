@@ -22,7 +22,8 @@ public class HoTroService {
                 "Cho phép người dùng click vào để đọc hướng dẫn sử dụng tài khoản",
                 "1. Đăng nhập bằng tên đăng nhập và mật khẩu được cấp.\n"
                         + "2. Với nhân viên mới: kiểm tra email lời mời kích hoạt và thiết lập mật khẩu lần đầu.\n"
-                        + "3. Với khách hàng: có thể tự đăng ký tài khoản tại màn hình Đăng ký để quản lý nhu cầu mua và tin đăng.\n"
+                        + "3. Với khách hàng: có thể tự đăng ký tài khoản tại màn hình Đăng ký để quản lý nhu cầu mua "
+                        + "và tin đăng.\n"
                         + "4. Sau khi đăng nhập thành công, người dùng có thể xem và chỉnh sửa thông tin cá nhân.",
                 "/huong-dan/tai-khoan"
         ));
@@ -54,7 +55,8 @@ public class HoTroService {
                 "Hướng dẫn giao dịch với khách hàng",
                 "Cho phép người dùng click vào để đọc tài liệu hướng dẫn giao dịch với khách hàng",
                 "1. Tiếp nhận và ghi nhận nhu cầu mua hoặc nhu cầu bán của khách hàng vào hệ thống.\n"
-                        + "2. Sử dụng tính năng Gợi ý giao dịch để đối soát nhu cầu phù hợp với các bất động sản đang có sẵn.\n"
+                        + "2. Sử dụng tính năng Gợi ý giao dịch để đối soát nhu cầu phù hợp với các bất động sản "
+                        + "đang có sẵn.\n"
                         + "3. Tổ chức tư vấn, xem thực địa bất động sản và thương lượng giá cả giữa hai bên.\n"
                         + "4. Tiến hành tạo hồ sơ giao dịch, cập nhật tình trạng giao dịch sang THANH_CONG khi hoàn tất.",
                 "/huong-dan/giao-dich"
