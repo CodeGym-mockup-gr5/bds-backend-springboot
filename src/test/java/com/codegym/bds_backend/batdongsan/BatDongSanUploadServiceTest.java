@@ -70,4 +70,12 @@ class BatDongSanUploadServiceTest {
         MockMultipartFile file = new MockMultipartFile("f", "a.pdf", "application/pdf", new byte[10]);
         assertThrows(BadRequestException.class, () -> uploadService.uploadHinhAnh(List.of(file)));
     }
+
+    @Test
+    void shouldRejectWhenContentTypeIsWebp() {
+        MockMultipartFile file = new MockMultipartFile("f", "a.webp", "image/webp", new byte[10]);
+        BadRequestException exception = assertThrows(BadRequestException.class,
+                () -> uploadService.uploadHinhAnh(List.of(file)));
+        assertEquals("Chỉ chấp nhận định dạng ảnh JPG, PNG", exception.getMessage());
+    }
 }

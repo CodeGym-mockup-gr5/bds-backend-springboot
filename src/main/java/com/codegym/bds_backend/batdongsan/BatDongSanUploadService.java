@@ -53,9 +53,8 @@ public class BatDongSanUploadService {
         }
         String contentType = file.getContentType();
         if (contentType == null || (!contentType.equalsIgnoreCase("image/jpeg")
-                && !contentType.equalsIgnoreCase("image/png")
-                && !contentType.equalsIgnoreCase("image/webp"))) {
-            throw new BadRequestException("Chỉ chấp nhận định dạng ảnh JPG, PNG, WEBP");
+                && !contentType.equalsIgnoreCase("image/png"))) {
+            throw new BadRequestException("Chỉ chấp nhận định dạng ảnh JPG, PNG");
         }
     }
 }
