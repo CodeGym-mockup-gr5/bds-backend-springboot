@@ -36,7 +36,7 @@ public class ThongBaoController {
     private final ThongBaoService thongBaoService;
 
     @GetMapping
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'NHAN_VIEN')")
     @Operation(summary = "Lấy danh sách thông báo phân trang")
     public ApiResponse<PageResponse<ThongBaoResponse>> findThongBao(
             @RequestParam(defaultValue = "0") int page,
@@ -53,7 +53,7 @@ public class ThongBaoController {
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'NHAN_VIEN')")
     @Operation(summary = "Xem chi tiết một thông báo theo mã ID")
     public ApiResponse<ThongBaoResponse> findThongBaoById(@PathVariable Long id) {
         return ApiResponse.ok(thongBaoService.findThongBaoById(id));
