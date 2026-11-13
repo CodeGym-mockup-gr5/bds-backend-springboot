@@ -6,7 +6,9 @@ import com.codegym.bds_backend.auth.TaiKhoanRepository;
 import com.codegym.bds_backend.batdongsan.dto.BatDongSanResponse;
 import com.codegym.bds_backend.batdongsan.dto.HinhAnhBdsDto;
 import com.codegym.bds_backend.batdongsan.dto.ThemBatDongSanRequest;
+import com.codegym.bds_backend.common.enums.TrangThaiDuyet;
 import com.codegym.bds_backend.common.exception.BadRequestException;
+import com.codegym.bds_backend.common.exception.BusinessException;
 import com.codegym.bds_backend.common.exception.NotFoundException;
 import com.codegym.bds_backend.common.response.PageResponse;
 import com.codegym.bds_backend.common.util.MaHienThi;
@@ -21,12 +23,17 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
 public class BatDongSanDangTinService {
+    private static final String ROLE_KHACH_HANG = "ROLE_KHACH_HANG";
+    private static final String MSG_CHUA_DANG_KY_BAN =
+            "Tài khoản chưa đăng ký đăng tin bán. Vui lòng gửi yêu cầu đăng tin để Admin duyệt";
+    private static final String MSG_CHO_DUYET = "Tài khoản đang chờ Admin duyệt để đăng tin bán";
 
     private final BatDongSanRepository batDongSanRepository;
     private final KhachHangRepository khachHangRepository;
@@ -35,8 +42,15 @@ public class BatDongSanDangTinService {
 
     @Transactional
     public BatDongSanResponse createBatDongSan(JwtPrincipal principal, ThemBatDongSanRequest request) {
-        KhachHang khachHang = determineKhachHang(principal, request);
-        khachHang.setLaKhBan(true);
+        KhachHang khachHang;
+        if (isKhachHang(principal)) {
+            khachHang = findKhachHangCuaTaiKhoan(principal);
+            checkQuyenDangTinBan(khachHang);
+        } else {
+            khachHang = findKhachHangDuocDangThay(request);
+            khachHang.setLaKhBan(true);
+            khachHang.setTrangThaiDuyet(TrangThaiDuyet.DA_DUYET);
+        }
 
         BatDongSan bds = new BatDongSan();
         bds.setKhachHang(khachHang);
@@ -80,17 +94,30 @@ public class BatDongSanDangTinService {
         return PageResponse.of(page.map(bds -> toResponse(bds, bds.getKhachHang())));
     }
 
-    private KhachHang determineKhachHang(JwtPrincipal principal, ThemBatDongSanRequest request) {
-        if (principal.roles() != null && principal.roles().contains("ROLE_KHACH_HANG")) {
-            TaiKhoan taiKhoan = taiKhoanRepository.findWithChuSoHuuById(principal.userId())
-                    .orElseThrow(() -> new NotFoundException("Không tìm thấy tài khoản"));
-            KhachHang kh = taiKhoan.getKhachHang();
-            if (kh == null || kh.getDeletedAt() != null) {
-                throw new NotFoundException("Không tìm thấy thông tin khách hàng cho tài khoản này");
-            }
-            return kh;
-        }
+    private static boolean isKhachHang(JwtPrincipal principal) {
+        return principal.roles() != null && principal.roles().contains(ROLE_KHACH_HANG);
+    }
 
+    private KhachHang findKhachHangCuaTaiKhoan(JwtPrincipal principal) {
+        TaiKhoan taiKhoan = taiKhoanRepository.findWithChuSoHuuById(principal.userId())
+                .orElseThrow(() -> new NotFoundException("Không tìm thấy tài khoản"));
+        KhachHang kh = taiKhoan.getKhachHang();
+        if (kh == null || kh.getDeletedAt() != null) {
+            throw new NotFoundException("Không tìm thấy thông tin khách hàng cho tài khoản này");
+        }
+        return kh;
+    }
+
+    private static void checkQuyenDangTinBan(KhachHang khachHang) {
+        if (!khachHang.isLaKhBan()) {
+            throw new BusinessException(HttpStatus.FORBIDDEN, MSG_CHUA_DANG_KY_BAN);
+        }
+        if (khachHang.getTrangThaiDuyet() != TrangThaiDuyet.DA_DUYET) {
+            throw new BusinessException(HttpStatus.FORBIDDEN, MSG_CHO_DUYET);
+        }
+    }
+
+    private KhachHang findKhachHangDuocDangThay(ThemBatDongSanRequest request) {
         if (request.khachHangId() == null) {
             throw new BadRequestException("Vui lòng chọn khách hàng sở hữu bất động sản");
         }

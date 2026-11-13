@@ -1,6 +1,7 @@
 package com.codegym.bds_backend.khachhang;
 
 import com.codegym.bds_backend.common.enums.GioiTinh;
+import com.codegym.bds_backend.common.enums.TrangThaiDuyet;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -42,6 +43,11 @@ public class KhachHang {
 
     @Column(name = "la_kh_ban", nullable = false)
     private boolean laKhBan;
+
+    @Enumerated(EnumType.STRING)
+    @JdbcTypeCode(SqlTypes.VARCHAR)
+    @Column(name = "trang_thai_duyet", nullable = false, length = 10)
+    private TrangThaiDuyet trangThaiDuyet = TrangThaiDuyet.DA_DUYET;
 
     @Column(name = "ngay_sinh")
     private LocalDate ngaySinh;

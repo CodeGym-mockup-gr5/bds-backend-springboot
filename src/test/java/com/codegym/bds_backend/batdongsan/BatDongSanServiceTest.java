@@ -80,6 +80,37 @@ class BatDongSanServiceTest {
     }
 
     @Test
+    void shouldShowOwnerWhenStaffSearches() {
+        when(currentUser.isAdminOrNhanVien()).thenReturn(true);
+        Page<BatDongSan> page = new PageImpl<>(
+                List.of(batDongSan(301L, TinhTrangBds.DA_BAN)), PageRequest.of(0, 10), 1);
+        when(batDongSanRepository.findAll(ArgumentMatchers.<Specification<BatDongSan>>any(), any(Pageable.class)))
+                .thenReturn(page);
+        when(hinhAnhBdsRepository.findByBatDongSanIds(anyCollection())).thenReturn(List.of());
+
+        BatDongSanListItemResponse item = batDongSanService.searchBatDongSan(emptyRequest()).content().get(0);
+
+        assertThat(item.maKh()).isEqualTo("KH1301");
+        assertThat(item.tenChuSoHuu()).isEqualTo("Chủ sở hữu 301");
+    }
+
+    @Test
+    void shouldShowOwnerOnlyForOwnPropertyWhenCustomerSearches() {
+        when(currentUser.findKhachHangId()).thenReturn(Optional.of(1304L));
+        Page<BatDongSan> page = new PageImpl<>(
+                List.of(batDongSan(303L, TinhTrangBds.CO_SAN), batDongSan(304L, TinhTrangBds.CO_SAN)),
+                PageRequest.of(0, 10), 2);
+        when(batDongSanRepository.findAll(ArgumentMatchers.<Specification<BatDongSan>>any(), any(Pageable.class)))
+                .thenReturn(page);
+        when(hinhAnhBdsRepository.findByBatDongSanIds(anyCollection())).thenReturn(List.of());
+
+        List<BatDongSanListItemResponse> items = batDongSanService.searchBatDongSan(emptyRequest()).content();
+
+        assertThat(items.get(0).tenChuSoHuu()).isNull();
+        assertThat(items.get(1).maKh()).isEqualTo("KH1304");
+    }
+
+    @Test
     void shouldHideOwnerWhenUserIsNotStaff() {
         when(currentUser.isAdminOrNhanVien()).thenReturn(false);
         Page<BatDongSan> page = new PageImpl<>(
@@ -165,7 +196,7 @@ class BatDongSanServiceTest {
     }
 
     @Test
-    void shouldReturnOwnerAndOrderedImagesWhenStaffViewsDetail() {
+    void shouldHideOwnerPhoneWhenStaffViewsDetail() {
         when(currentUser.isAdminOrNhanVien()).thenReturn(true);
         BatDongSan bds = batDongSan(301L, TinhTrangBds.DA_BAN);
         bds.getKhachHang().setSoDienThoai("0987000201");
@@ -178,6 +209,33 @@ class BatDongSanServiceTest {
         assertThat(result.maBds()).isEqualTo("BDS301");
         assertThat(result.hinhAnh()).extracting("thuTu").containsExactly(0, 1);
         assertThat(result.chuSoHuu().hoTen()).isEqualTo("Chủ sở hữu 301");
+        assertThat(result.chuSoHuu().soDienThoai()).isNull();
+    }
+
+        @Test
+    void shouldShowOwnerPhoneWhenAdminViewsDetail() {
+        when(currentUser.isAdminOrNhanVien()).thenReturn(true);
+        when(currentUser.isAdmin()).thenReturn(true);
+        BatDongSan bds = batDongSan(301L, TinhTrangBds.DA_BAN);
+        bds.getKhachHang().setSoDienThoai("0987000201");
+        when(batDongSanRepository.findWithChiTietById(301L)).thenReturn(Optional.of(bds));
+
+        BatDongSanDetailResponse result = batDongSanService.getChiTietBatDongSan(301L);
+
+        assertThat(result.chuSoHuu().maKh()).isEqualTo("KH1301");
+        assertThat(result.chuSoHuu().soDienThoai()).isEqualTo("0987000201");
+    }
+
+        @Test
+    void shouldShowOwnerPhoneWhenCustomerViewsOwnSoldProperty() {
+        when(currentUser.findKhachHangId()).thenReturn(Optional.of(1301L));
+        BatDongSan bds = batDongSan(301L, TinhTrangBds.DA_BAN);
+        bds.getKhachHang().setSoDienThoai("0987000201");
+        when(batDongSanRepository.findWithChiTietById(301L)).thenReturn(Optional.of(bds));
+
+        BatDongSanDetailResponse result = batDongSanService.getChiTietBatDongSan(301L);
+
+        assertThat(result.chuSoHuu().maKh()).isEqualTo("KH1301");
         assertThat(result.chuSoHuu().soDienThoai()).isEqualTo("0987000201");
     }
 

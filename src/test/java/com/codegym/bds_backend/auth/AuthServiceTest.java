@@ -17,6 +17,7 @@ import com.codegym.bds_backend.auth.dto.LoginRequest;
 import com.codegym.bds_backend.auth.dto.LoginResponse;
 import com.codegym.bds_backend.auth.dto.RegisterRequest;
 import com.codegym.bds_backend.auth.dto.ThongTinTaiKhoan;
+import com.codegym.bds_backend.common.enums.TrangThaiDuyet;
 import com.codegym.bds_backend.common.exception.BadRequestException;
 import com.codegym.bds_backend.common.exception.BusinessException;
 import com.codegym.bds_backend.common.exception.NotFoundException;
@@ -140,6 +141,8 @@ class AuthServiceTest {
         assertEquals("jwt", response.token());
         assertEquals(0, taiKhoan.getSoLanDangNhapSai());
         assertEquals(List.of("ROLE_NHAN_VIEN", "ROLE_ADMIN"), response.taiKhoan().vaiTro());
+        assertNull(response.taiKhoan().laKhBan());
+        assertNull(response.taiKhoan().trangThaiDuyet());
     }
 
     @Test
@@ -167,21 +170,7 @@ class AuthServiceTest {
 
     @Test
     void shouldCreateKhachHangWithDisplayCodeAndHashedPassword() {
-        when(taiKhoanRepository.existsByTenDangNhap("khach01")).thenReturn(false);
-        when(khachHangRepository.existsBySoCccd("012345678901")).thenReturn(false);
-        when(khachHangRepository.existsByEmailIgnoreCase("an@example.com")).thenReturn(false);
-        when(nhanVienRepository.existsByEmailIgnoreCase("an@example.com")).thenReturn(false);
-        when(khachHangRepository.saveAndFlush(any(KhachHang.class))).thenAnswer(call -> {
-            KhachHang khachHang = call.getArgument(0);
-            khachHang.setId(12L);
-            return khachHang;
-        });
-        when(passwordEncoder.encode("matkhau123")).thenReturn("encoded");
-        when(taiKhoanRepository.save(any(TaiKhoan.class))).thenAnswer(call -> {
-            TaiKhoan taiKhoan = call.getArgument(0);
-            taiKhoan.setId(7L);
-            return taiKhoan;
-        });
+        stubSuccessfulRegistration();
 
         ThongTinTaiKhoan result = service.registerKhachHang(request());
 
@@ -190,6 +179,48 @@ class AuthServiceTest {
         ArgumentCaptor<KhachHang> captor = ArgumentCaptor.forClass(KhachHang.class);
         verify(khachHangRepository).saveAndFlush(captor.capture());
         assertEquals("KH012", captor.getValue().getMaKh());
+    }
+
+    @Test
+    void shouldSetChoDuyetAndLaKhBanWhenRegisterWithMuonDangTinBan() {
+        stubSuccessfulRegistration();
+
+        ThongTinTaiKhoan result = service.registerKhachHang(request(true));
+
+        ArgumentCaptor<KhachHang> captor = ArgumentCaptor.forClass(KhachHang.class);
+        verify(khachHangRepository).saveAndFlush(captor.capture());
+        KhachHang khachHang = captor.getValue();
+        assertTrue(khachHang.isLaKhMua());
+        assertTrue(khachHang.isLaKhBan());
+        assertEquals(TrangThaiDuyet.CHO_DUYET, khachHang.getTrangThaiDuyet());
+        assertEquals(Boolean.TRUE, result.laKhBan());
+        assertEquals("CHO_DUYET", result.trangThaiDuyet());
+    }
+
+    @Test
+    void shouldSetDaDuyetWithoutLaKhBanWhenRegisterWithoutMuonDangTinBan() {
+        stubSuccessfulRegistration();
+
+        ThongTinTaiKhoan result = service.registerKhachHang(request(false));
+
+        ArgumentCaptor<KhachHang> captor = ArgumentCaptor.forClass(KhachHang.class);
+        verify(khachHangRepository).saveAndFlush(captor.capture());
+        KhachHang khachHang = captor.getValue();
+        assertTrue(khachHang.isLaKhMua());
+        assertFalse(khachHang.isLaKhBan());
+        assertEquals(TrangThaiDuyet.DA_DUYET, khachHang.getTrangThaiDuyet());
+        assertEquals(Boolean.FALSE, result.laKhBan());
+        assertEquals("DA_DUYET", result.trangThaiDuyet());
+    }
+
+    @Test
+    void shouldTreatNullMuonDangTinBanAsFalseWhenRegister() {
+        stubSuccessfulRegistration();
+
+        ThongTinTaiKhoan result = service.registerKhachHang(request(null));
+
+        assertEquals(Boolean.FALSE, result.laKhBan());
+        assertEquals("DA_DUYET", result.trangThaiDuyet());
     }
 
     @Test
@@ -286,9 +317,31 @@ class AuthServiceTest {
         assertThrows(NotFoundException.class, () -> service.changePasswordTaiKhoan(999L, request));
     }
 
+    private void stubSuccessfulRegistration() {
+        when(taiKhoanRepository.existsByTenDangNhap("khach01")).thenReturn(false);
+        when(khachHangRepository.existsBySoCccd("012345678901")).thenReturn(false);
+        when(khachHangRepository.existsByEmailIgnoreCase("an@example.com")).thenReturn(false);
+        when(nhanVienRepository.existsByEmailIgnoreCase("an@example.com")).thenReturn(false);
+        when(khachHangRepository.saveAndFlush(any(KhachHang.class))).thenAnswer(call -> {
+            KhachHang khachHang = call.getArgument(0);
+            khachHang.setId(12L);
+            return khachHang;
+        });
+        when(passwordEncoder.encode("matkhau123")).thenReturn("encoded");
+        when(taiKhoanRepository.save(any(TaiKhoan.class))).thenAnswer(call -> {
+            TaiKhoan taiKhoan = call.getArgument(0);
+            taiKhoan.setId(7L);
+            return taiKhoan;
+        });
+    }
+
     private static RegisterRequest request() {
-        return new RegisterRequest(
-                "Nguyễn Văn An", "0912345678", "an@example.com", "012345678901", "khach01", "matkhau123");
+        return request(null);
+    }
+
+    private static RegisterRequest request(Boolean muonDangTinBan) {
+        return new RegisterRequest("Nguyễn Văn An", "0912345678", "an@example.com", "012345678901", "khach01",
+                "matkhau123", muonDangTinBan);
     }
 
     private static TaiKhoan taiKhoanNhanVien(int soLanSai, boolean laAdmin) {

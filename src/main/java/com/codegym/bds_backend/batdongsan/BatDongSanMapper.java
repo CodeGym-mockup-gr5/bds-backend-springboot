@@ -31,7 +31,7 @@ public class BatDongSanMapper {
                 anhDaiDien);
     }
 
-    public BatDongSanDetailResponse toDetailResponse(BatDongSan bds, boolean hienChuSoHuu) {
+    public BatDongSanDetailResponse toDetailResponse(BatDongSan bds, boolean hienChuSoHuu, boolean hienSoDienThoai) {
         return new BatDongSanDetailResponse(
                 bds.getId(),
                 bds.getMaBds(),
@@ -47,18 +47,21 @@ public class BatDongSanMapper {
                 bds.getGhiChu(),
                 bds.getNgayDang(),
                 bds.getHinhAnh().stream().map(this::toHinhAnhResponse).toList(),
-                hienChuSoHuu ? toChuSoHuuResponse(bds.getKhachHang()) : null);
+                hienChuSoHuu ? toChuSoHuuResponse(bds.getKhachHang(), hienSoDienThoai) : null);
     }
 
     private HinhAnhResponse toHinhAnhResponse(HinhAnhBds hinhAnh) {
         return new HinhAnhResponse(hinhAnh.getId(), hinhAnh.getDuongDan(), hinhAnh.getThuTu());
     }
 
-    private ChuSoHuuResponse toChuSoHuuResponse(KhachHang chuSoHuu) {
+    private ChuSoHuuResponse toChuSoHuuResponse(KhachHang chuSoHuu, boolean hienSoDienThoai) {
         if (chuSoHuu == null) {
             return null;
         }
         return new ChuSoHuuResponse(
-                chuSoHuu.getId(), chuSoHuu.getMaKh(), chuSoHuu.getHoTen(), chuSoHuu.getSoDienThoai());
+                chuSoHuu.getId(),
+                chuSoHuu.getMaKh(),
+                chuSoHuu.getHoTen(),
+                hienSoDienThoai ? chuSoHuu.getSoDienThoai() : null);
     }
 }

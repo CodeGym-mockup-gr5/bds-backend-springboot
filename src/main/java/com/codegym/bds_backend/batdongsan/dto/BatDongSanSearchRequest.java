@@ -41,7 +41,8 @@ public record BatDongSanSearchRequest(
         @PositiveOrZero(message = "Giá tiền không hợp lệ")
         BigDecimal giaDen,
 
-        @Schema(description = "Id khách hàng chủ sở hữu. Chỉ Admin, Nhân viên lọc được",
+        @Schema(description = "Id khách hàng chủ sở hữu. Admin, nhân viên lọc được mọi khách; "
+                + "khách hàng chỉ lọc được chính mình",
                 example = "210")
         @Positive(message = "Mã khách hàng không hợp lệ")
         Long khachHangId,
