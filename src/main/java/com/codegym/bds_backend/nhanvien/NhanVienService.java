@@ -98,7 +98,7 @@ public class NhanVienService {
         if (!nv.getEmail().equalsIgnoreCase(newEmail)) {
             if (nhanVienRepository.existsByEmailIgnoreCaseAndIdNot(newEmail, id)
                     || khachHangRepository.existsByEmailIgnoreCase(newEmail)) {
-                throw new BusinessException("Email đã được sử dụng");
+                throw BusinessException.fieldConflict("email", "Email đã được sử dụng");
             }
             nv.setEmail(newEmail);
         }

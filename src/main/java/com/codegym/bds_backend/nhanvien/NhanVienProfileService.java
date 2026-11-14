@@ -28,7 +28,7 @@ public class NhanVienProfileService {
 
         String email = request.email().trim().toLowerCase();
         if (nhanVienRepository.existsByEmailIgnoreCaseAndIdNot(email, nhanVien.getId())) {
-            throw new BusinessException("Email đã được sử dụng bởi nhân viên khác");
+            throw BusinessException.fieldConflict("email", "Email đã được sử dụng bởi nhân viên khác");
         }
 
         nhanVien.setHoTen(request.hoTen().trim());
