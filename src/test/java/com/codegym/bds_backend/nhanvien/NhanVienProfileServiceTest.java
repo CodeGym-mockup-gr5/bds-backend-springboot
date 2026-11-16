@@ -105,7 +105,13 @@ class NhanVienProfileServiceTest {
                 "0912345601",
                 "duplicate@example.com");
 
-        assertThrows(BusinessException.class, () -> profileService.updateProfileNhanVien(1L, request));
+        BusinessException exception = assertThrows(
+                BusinessException.class,
+                () -> profileService.updateProfileNhanVien(1L, request));
+        assertNotNull(exception.getErrors());
+        assertEquals(1, exception.getErrors().size());
+        assertEquals("email", exception.getErrors().get(0).field());
+        assertEquals("Email đã được sử dụng bởi nhân viên khác", exception.getErrors().get(0).message());
         verify(nhanVienRepository, never()).save(any());
     }
 }
