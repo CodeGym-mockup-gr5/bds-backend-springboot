@@ -53,7 +53,7 @@ public class NhanVienService {
         String soDienThoai = request.soDienThoai().trim();
         String diaChi = request.diaChi().trim();
 
-        if (nhanVienRepository.countByEmailIgnoreCaseAndNotDeleted(email) > 0
+        if (nhanVienRepository.existsEmailIgnoreCaseIncludingDeleted(email)
                 || khachHangRepository.existsByEmailIgnoreCase(email)) {
             throw new BusinessException("Email đã được sử dụng");
         }
@@ -96,7 +96,7 @@ public class NhanVienService {
         String newPhone = request.soDienThoai().trim();
 
         if (!nv.getEmail().equalsIgnoreCase(newEmail)) {
-            if (nhanVienRepository.countByEmailIgnoreCaseAndIdNotAndNotDeleted(newEmail, id) > 0
+            if (nhanVienRepository.existsByEmailIgnoreCaseAndIdNot(newEmail, id)
                     || khachHangRepository.existsByEmailIgnoreCase(newEmail)) {
                 throw new BusinessException("Email đã được sử dụng");
             }

@@ -109,7 +109,7 @@ class NhanVienServiceTest {
                 false,
                 "c.le");
 
-        when(nhanVienRepository.existsByEmailIgnoreCase("c.le@example.com")).thenReturn(false);
+        when(nhanVienRepository.existsEmailIgnoreCaseIncludingDeleted("c.le@example.com")).thenReturn(false);
         when(khachHangRepository.existsByEmailIgnoreCase("c.le@example.com")).thenReturn(false);
         when(nhanVienRepository.existsBySoDienThoai("0912345680")).thenReturn(false);
         when(taiKhoanRepository.existsByTenDangNhap("c.le")).thenReturn(false);
@@ -138,7 +138,7 @@ class NhanVienServiceTest {
                 false,
                 null);
 
-        when(nhanVienRepository.existsByEmailIgnoreCase("trung@example.com")).thenReturn(true);
+        when(nhanVienRepository.existsEmailIgnoreCaseIncludingDeleted("trung@example.com")).thenReturn(true);
 
         BusinessException e = assertThrows(BusinessException.class, () -> service.createNhanVien(request));
         assertEquals("Email đã được sử dụng", e.getMessage());
@@ -158,7 +158,7 @@ class NhanVienServiceTest {
                 false,
                 null);
 
-        when(nhanVienRepository.existsByEmailIgnoreCase("c@example.com")).thenReturn(false);
+        when(nhanVienRepository.existsEmailIgnoreCaseIncludingDeleted("c@example.com")).thenReturn(false);
         when(khachHangRepository.existsByEmailIgnoreCase("c@example.com")).thenReturn(false);
         when(nhanVienRepository.existsBySoDienThoai("0912345680")).thenReturn(true);
 
@@ -180,7 +180,7 @@ class NhanVienServiceTest {
                 false,
                 "c_user");
 
-        when(nhanVienRepository.existsByEmailIgnoreCase("c@example.com")).thenReturn(false);
+        when(nhanVienRepository.existsEmailIgnoreCaseIncludingDeleted("c@example.com")).thenReturn(false);
         when(khachHangRepository.existsByEmailIgnoreCase("c@example.com")).thenReturn(false);
         when(nhanVienRepository.existsBySoDienThoai("0912345680")).thenReturn(false);
         when(taiKhoanRepository.existsByTenDangNhap("c_user")).thenReturn(true);
