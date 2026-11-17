@@ -13,16 +13,25 @@ public interface NhanVienRepository extends JpaRepository<NhanVien, Long> {
 
     boolean existsByEmailIgnoreCase(String email);
 
+    @Query(value = "SELECT COUNT(*) FROM nhan_vien WHERE LOWER(email) = LOWER(:email)",
+            nativeQuery = true)
+    long countEmailIgnoreCaseIncludingDeleted(@Param("email") String email);
+
+    @Query(value = "SELECT COUNT(*) FROM nhan_vien WHERE LOWER(email) = LOWER(:email) AND id <> :id",
+            nativeQuery = true)
+    long countEmailIgnoreCaseAndIdNotIncludingDeleted(@Param("email") String email, @Param("id") Long id);
+
+    default boolean existsEmailIgnoreCaseIncludingDeleted(String email) {
+        return countEmailIgnoreCaseIncludingDeleted(email) > 0;
+    }
+
+    default boolean existsByEmailIgnoreCaseAndIdNot(String email, Long id) {
+        return countEmailIgnoreCaseAndIdNotIncludingDeleted(email, id) > 0;
+    }
+
     boolean existsBySoDienThoai(String soDienThoai);
 
     boolean existsBySoDienThoaiAndIdNot(String soDienThoai, Long id);
-    @Query(value = "SELECT COUNT(*) FROM nhan_vien WHERE LOWER(email) = LOWER(:email) AND id <> :id",
-            nativeQuery = true)
-    long countEmailIgnoreCaseIncludingDeleted(@Param("email") String email, @Param("id") Long id);
-
-    default boolean existsByEmailIgnoreCaseAndIdNot(String email, Long id) {
-        return countEmailIgnoreCaseIncludingDeleted(email, id) > 0;
-    }
 
     boolean existsByLaAdminTrue();
 
