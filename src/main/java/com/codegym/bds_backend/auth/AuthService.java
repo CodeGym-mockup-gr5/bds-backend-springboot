@@ -34,7 +34,7 @@ public class AuthService {
     private static final String MSG_INVALID_LOGIN = "Tên đăng nhập hoặc mật khẩu không đúng";
     private static final String MSG_LOCKED =
             "Tài khoản đã bị khóa do nhập sai quá số lần cho phép. Vui lòng dùng chức năng quên mật khẩu";
-    private static final String MSG_NO_PASSWORD =
+    private static final String MSG_CHUA_DAT_MAT_KHAU =
             "Tài khoản chưa đặt mật khẩu. Vui lòng kiểm tra email lời mời hoặc dùng chức năng quên mật khẩu";
     private static final String MSG_CONTACT = "vui lòng liên hệ trung tâm để được hỗ trợ";
 
@@ -60,7 +60,7 @@ public class AuthService {
             throw new BusinessException(HttpStatus.FORBIDDEN, MSG_LOCKED);
         }
         if (taiKhoan.getMatKhauHash() == null) {
-            throw new BusinessException(HttpStatus.FORBIDDEN, MSG_NO_PASSWORD);
+            throw new BusinessException(HttpStatus.FORBIDDEN, MSG_CHUA_DAT_MAT_KHAU);
         }
         if (!passwordEncoder.matches(request.matKhau(), taiKhoan.getMatKhauHash())) {
             if (recordFailedLogin(taiKhoan)) {
