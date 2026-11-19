@@ -1,9 +1,14 @@
 package com.codegym.bds_backend.batdongsan;
 
+import static org.hamcrest.Matchers.allOf;
 import static org.hamcrest.Matchers.containsInAnyOrder;
+import static org.hamcrest.Matchers.containsStringIgnoringCase;
 import static org.hamcrest.Matchers.everyItem;
+import static org.hamcrest.Matchers.greaterThanOrEqualTo;
+import static org.hamcrest.Matchers.hasItems;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.lessThanOrEqualTo;
 import static org.hamcrest.Matchers.nullValue;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.authentication;
 import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
@@ -15,7 +20,9 @@ import com.codegym.bds_backend.auth.JwtPrincipal;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -32,6 +39,9 @@ class BatDongSanControllerIntegrationTest {
 
     private MockMvc mockMvc;
 
+    @Autowired
+    private BatDongSanRepository batDongSanRepository;
+
     @BeforeEach
     void setUp(WebApplicationContext context) {
         mockMvc = MockMvcBuilders.webAppContextSetup(context).apply(springSecurity()).build();
@@ -40,18 +50,25 @@ class BatDongSanControllerIntegrationTest {
     @Test
     @WithMockUser(roles = "NHAN_VIEN")
     void shouldReturnAllPropertiesNewestFirstWhenStaffSearchesWithoutFilter() throws Exception {
+        int totalCount = (int) batDongSanRepository.count();
+        String newestMaBds = batDongSanRepository
+                .findAllByOrderByNgayDangDescIdDesc(PageRequest.of(0, 1))
+                .getContent()
+                .get(0)
+                .getMaBds();
+
         mockMvc.perform(get(URL))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success", is(true)))
-                .andExpect(jsonPath("$.data.totalElements", is(12)))
-                .andExpect(jsonPath("$.data.content[0].maBds", is("BDS312")));
+                .andExpect(jsonPath("$.data.totalElements", is(totalCount)))
+                .andExpect(jsonPath("$.data.content[0].maBds", is(newestMaBds)));
     }
 
     @Test
     void shouldReturnOnlyAvailablePropertiesWhenGuestSearches() throws Exception {
         mockMvc.perform(get(URL).param("tinhTrang", "DA_BAN"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.totalElements", is(8)))
+                .andExpect(jsonPath("$.data.totalElements", is(countAvailableProperties())))
                 .andExpect(jsonPath("$.data.content[*].tinhTrang", everyItem(is("CO_SAN"))));
     }
 
@@ -59,7 +76,7 @@ class BatDongSanControllerIntegrationTest {
     void shouldHideOwnerAndIgnoreOwnerFilterWhenGuestSearches() throws Exception {
         mockMvc.perform(get(URL).param("khachHangId", "210"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.totalElements", is(8)))
+                .andExpect(jsonPath("$.data.totalElements", is(countAvailableProperties())))
                 .andExpect(jsonPath("$.data.content[*].khachHangId", everyItem(nullValue())))
                 .andExpect(jsonPath("$.data.content[*].maKh", everyItem(nullValue())))
                 .andExpect(jsonPath("$.data.content[*].tenChuSoHuu", everyItem(nullValue())));
@@ -68,26 +85,37 @@ class BatDongSanControllerIntegrationTest {
     @Test
     @WithMockUser(roles = "NHAN_VIEN")
     void shouldFilterByTypeAndLocationWhenStaffSearches() throws Exception {
-        mockMvc.perform(get(URL).param("loaiBds", "DAT").param("viTri", "TRUNG_TAM"))
+        mockMvc.perform(get(URL).param("loaiBds", "DAT").param("viTri", "TRUNG_TAM").param("size", "100"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.content[*].maBds", containsInAnyOrder("BDS301", "BDS305", "BDS309")));
+                .andExpect(jsonPath("$.data.content[*].maBds", hasItems("BDS301", "BDS305", "BDS309")))
+                .andExpect(jsonPath("$.data.content[*].loaiBds", everyItem(is("DAT"))))
+                .andExpect(jsonPath("$.data.content[*].viTri", everyItem(is("TRUNG_TAM"))));
     }
 
     @Test
     @WithMockUser(roles = "NHAN_VIEN")
     void shouldFilterByStatusWhenStaffSearchesAvailableLand() throws Exception {
-        mockMvc.perform(get(URL).param("loaiBds", "DAT").param("viTri", "TRUNG_TAM").param("tinhTrang", "CO_SAN"))
+        mockMvc.perform(get(URL)
+                        .param("loaiBds", "DAT")
+                        .param("viTri", "TRUNG_TAM")
+                        .param("tinhTrang", "CO_SAN")
+                        .param("size", "100"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.content[*].maBds", containsInAnyOrder("BDS309")));
+                .andExpect(jsonPath("$.data.content[*].maBds", hasItems("BDS309")))
+                .andExpect(jsonPath("$.data.content[*].loaiBds", everyItem(is("DAT"))))
+                .andExpect(jsonPath("$.data.content[*].viTri", everyItem(is("TRUNG_TAM"))))
+                .andExpect(jsonPath("$.data.content[*].tinhTrang", everyItem(is("CO_SAN"))));
     }
 
     @Test
     @WithMockUser(roles = "NHAN_VIEN")
     void shouldFilterByAreaRangeWhenRangeIsGiven() throws Exception {
-        mockMvc.perform(get(URL).param("dienTichTu", "100").param("dienTichDen", "150"))
+        mockMvc.perform(get(URL).param("dienTichTu", "100").param("dienTichDen", "150").param("size", "100"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.content[*].maBds",
-                        containsInAnyOrder("BDS302", "BDS303", "BDS305", "BDS310", "BDS311")));
+                        hasItems("BDS302", "BDS303", "BDS305", "BDS310", "BDS311")))
+                .andExpect(jsonPath("$.data.content[*].dienTich",
+                        everyItem(allOf(greaterThanOrEqualTo(100.0), lessThanOrEqualTo(150.0)))));
     }
 
     @Test
@@ -101,9 +129,10 @@ class BatDongSanControllerIntegrationTest {
     @Test
     @WithMockUser(roles = "NHAN_VIEN")
     void shouldMatchAddressWhenKeywordIsGiven() throws Exception {
-        mockMvc.perform(get(URL).param("tuKhoa", "thủ đức"))
+        mockMvc.perform(get(URL).param("tuKhoa", "thủ đức").param("size", "100"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.content[*].maBds", containsInAnyOrder("BDS302", "BDS310")));
+                .andExpect(jsonPath("$.data.content[*].maBds", hasItems("BDS302", "BDS310")))
+                .andExpect(jsonPath("$.data.content[*].diaChi", everyItem(containsStringIgnoringCase("thủ đức"))));
     }
 
     @Test
@@ -218,14 +247,19 @@ class BatDongSanControllerIntegrationTest {
 
     @Test
     void shouldFilterOnlyOwnPropertiesWhenCustomerGivesKhachHangId() throws Exception {
-        mockMvc.perform(get(URL).param("khachHangId", "201").with(khachHang201()))
+        mockMvc.perform(get(URL).param("khachHangId", "201").param("size", "100").with(khachHang201()))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.content[*].maBds", containsInAnyOrder("BDS306")))
-                .andExpect(jsonPath("$.data.content[0].maKh", is("KH201")));
+                .andExpect(jsonPath("$.data.content[*].maBds", hasItems("BDS306")))
+                .andExpect(jsonPath("$.data.content[*].maKh", everyItem(is("KH201"))));
 
         mockMvc.perform(get(URL).param("khachHangId", "203").with(khachHang201()))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.totalElements", is(8)));
+                .andExpect(jsonPath("$.data.totalElements", is(countAvailableProperties())));
+    }
+
+    private int countAvailableProperties() {
+        return (int) batDongSanRepository.count(
+                (root, query, cb) -> cb.equal(root.get("tinhTrang"), TinhTrangBds.CO_SAN));
     }
 
     private static RequestPostProcessor khachHang201() {
