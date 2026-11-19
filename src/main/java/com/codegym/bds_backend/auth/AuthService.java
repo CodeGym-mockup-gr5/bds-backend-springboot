@@ -7,6 +7,7 @@ import com.codegym.bds_backend.auth.dto.LoginResponse;
 import com.codegym.bds_backend.auth.dto.RegisterRequest;
 import com.codegym.bds_backend.auth.dto.SetPasswordRequest;
 import com.codegym.bds_backend.auth.dto.ThongTinTaiKhoan;
+import com.codegym.bds_backend.auth.validation.PasswordPolicy;
 import com.codegym.bds_backend.common.enums.TrangThaiDuyet;
 import com.codegym.bds_backend.common.enums.VaiTro;
 import com.codegym.bds_backend.common.exception.BadRequestException;
@@ -89,6 +90,7 @@ public class AuthService {
     public ThongTinTaiKhoan registerKhachHang(RegisterRequest request) {
         String tenDangNhap = request.tenDangNhap().trim();
         String email = request.email().trim().toLowerCase();
+        PasswordPolicy.validateContextMatKhau("matKhau", request.matKhau(), tenDangNhap, email);
         String soCccd = request.soCccd() == null || request.soCccd().isBlank() ? null : request.soCccd().trim();
         if (taiKhoanRepository.existsByTenDangNhap(tenDangNhap)) {
             throw new BusinessException("Tên đăng nhập đã tồn tại");
@@ -136,6 +138,13 @@ public class AuthService {
     @Transactional
     public void setMatKhau(SetPasswordRequest request) {
         TaiKhoan taiKhoan = tokenXacThucService.consumeToken(request.token());
+        if (taiKhoan.getMatKhauHash() != null
+                && passwordEncoder.matches(request.matKhau(), taiKhoan.getMatKhauHash())) {
+            throw BusinessException.fieldConflict(
+                    "matKhau", "Mật khẩu mới không được trùng với mật khẩu cũ");
+        }
+        PasswordPolicy.validateContextMatKhau(
+                "matKhau", request.matKhau(), taiKhoan.getTenDangNhap(), taiKhoan.emailLienHe());
         taiKhoan.setMatKhauHash(passwordEncoder.encode(request.matKhau()));
         taiKhoan.setSoLanDangNhapSai(0);
         taiKhoan.setBiKhoa(false);
@@ -144,20 +153,23 @@ public class AuthService {
     @Transactional
     public void changePasswordTaiKhoan(Long taiKhoanId, ChangePasswordRequest request) {
         TaiKhoan taiKhoan = taiKhoanRepository
-                .findById(taiKhoanId)
+                .findWithChuSoHuuById(taiKhoanId)
                 .filter(TaiKhoan::chuSoHuuConHieuLuc)
                 .orElseThrow(() -> new NotFoundException("Không tìm thấy tài khoản"));
 
         if (!request.matKhauMoi().equals(request.xacNhanMatKhau())) {
-            throw new BadRequestException("Mật khẩu mới phải từ 6 đến 32 ký tự và khớp nhau");
+            throw BadRequestException.fieldError("xacNhanMatKhau", "Xác nhận mật khẩu không khớp");
         }
         if (taiKhoan.getMatKhauHash() == null
                 || !passwordEncoder.matches(request.matKhauCu(), taiKhoan.getMatKhauHash())) {
-            throw new BusinessException("Mật khẩu cũ không đúng");
+            throw BusinessException.fieldConflict("matKhauCu", "Mật khẩu cũ không đúng");
         }
         if (passwordEncoder.matches(request.matKhauMoi(), taiKhoan.getMatKhauHash())) {
-            throw new BusinessException("Mật khẩu mới không được trùng với mật khẩu cũ");
+            throw BusinessException.fieldConflict(
+                    "matKhauMoi", "Mật khẩu mới không được trùng với mật khẩu cũ");
         }
+        PasswordPolicy.validateContextMatKhau(
+                "matKhauMoi", request.matKhauMoi(), taiKhoan.getTenDangNhap(), taiKhoan.emailLienHe());
 
         taiKhoan.setMatKhauHash(passwordEncoder.encode(request.matKhauMoi()));
         taiKhoan.setSoLanDangNhapSai(0);
