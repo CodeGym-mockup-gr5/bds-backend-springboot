@@ -64,13 +64,13 @@ INSERT INTO hinh_anh_bds (bat_dong_san_id, duong_dan, thu_tu) VALUES
   (302, '/uploads/bds/302-1.jpg', 0),
   (303, '/uploads/bds/303-1.jpg', 0);
 
-INSERT INTO nhu_cau (id, ma_nc, khach_hang_id, loai_bds, vi_tri, dien_tich_min, dien_tich_max, ghi_chu) VALUES
-  (401, 'NC401', 206, 'DAT', 'TRUNG_TAM', 70, 100, 'Gần trường học'),
-  (402, 'NC402', 207, 'NHA_O', 'NGOAI_O', 100, 130, NULL),
-  (403, 'NC403', 208, 'DAT', 'NGOAI_O', 120, 200, NULL),
-  (404, 'NC404', 209, 'NHA_O', 'TRUNG_TAM', 60, 80, 'Ưu tiên có sân đỗ xe'),
-  (405, 'NC405', 203, 'NHA_O', 'NGOAI_O', 80, 100, NULL),
-  (406, 'NC406', 210, 'DAT', 'TRUNG_TAM', 50, 70, NULL);
+INSERT INTO nhu_cau (id, ma_nc, khach_hang_id, loai_bds, vi_tri, dien_tich_min, dien_tich_max, gia_min, gia_max, ghi_chu) VALUES
+  (401, 'NC401', 206, 'DAT', 'TRUNG_TAM', 70, 100, NULL, NULL, 'Gần trường học'),
+  (402, 'NC402', 207, 'NHA_O', 'NGOAI_O', 100, 130, 2700000000, 4000000000, NULL),
+  (403, 'NC403', 208, 'DAT', 'NGOAI_O', 120, 200, 1500000000, 2200000000, NULL),
+  (404, 'NC404', 209, 'NHA_O', 'TRUNG_TAM', 60, 80, 3500000000, 4600000000, 'Ưu tiên có sân đỗ xe'),
+  (405, 'NC405', 203, 'NHA_O', 'NGOAI_O', 80, 100, 2500000000, 3500000000, NULL),
+  (406, 'NC406', 210, 'DAT', 'TRUNG_TAM', 50, 70, 2800000000, 3200000000, NULL);
 
 INSERT INTO giao_dich (id, ma_gd, nhan_vien_id, kh_mua_id, kh_ban_id, bat_dong_san_id, so_tien, ngay_gd, ty_le_hoa_hong, mo_ta, tinh_trang) VALUES
   (501, 'GD501', 101, 206, 201, 301, 2400000000, '2026-06-12', 1.5, 'Mua đất Đống Đa', 'THANH_CONG'),

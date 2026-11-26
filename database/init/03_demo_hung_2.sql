@@ -17,10 +17,10 @@ INSERT INTO bat_dong_san (id, ma_bds, khach_hang_id, loai_bds, dia_chi, vi_tri, 
   (1515, 'BDS1515', 204, 'DAT', 'Thửa 102 ấp Thới Thạnh, huyện Phong Điền, Cần Thơ', 'NGOAI_O', 'TAY', 250, 1250000000, 'Sổ đỏ chính chủ', 'CO_SAN', '2026-10-24', 'Đất vườn, gần chợ nổi'),
   (1516, 'BDS1516', 205, 'DAT', 'Lô 5 đường Lê Lợi, quận Ngô Quyền, Hải Phòng', 'TRUNG_TAM', 'DONG_BAC', 75, 6750000000, 'Sổ đỏ chính chủ', 'DA_BAN', '2026-10-21', 'Mặt phố kinh doanh');
 
-INSERT INTO nhu_cau (id, ma_nc, khach_hang_id, loai_bds, vi_tri, dien_tich_min, dien_tich_max, ghi_chu) VALUES
-  (1501, 'NC1501', 203, 'NHA_O', 'TRUNG_TAM', 60, 90, 'Nhà 3 tầng, gần trường học'),
-  (1502, 'NC1502', 203, 'DAT', 'NGOAI_O', 100, 150, 'Đường ô tô, sổ đỏ chính chủ'),
-  (1503, 'NC1503', 203, 'NHA_O', 'NGOAI_O', 80, 120, 'Có sân để xe, yên tĩnh');
+INSERT INTO nhu_cau (id, ma_nc, khach_hang_id, loai_bds, vi_tri, dien_tich_min, dien_tich_max, gia_min, gia_max, ghi_chu) VALUES
+  (1501, 'NC1501', 203, 'NHA_O', 'TRUNG_TAM', 60, 90, 5000000000, 8000000000, 'Nhà 3 tầng, gần trường học'),
+  (1502, 'NC1502', 203, 'DAT', 'NGOAI_O', 100, 150, 3000000000, 4000000000, 'Đường ô tô, sổ đỏ chính chủ'),
+  (1503, 'NC1503', 203, 'NHA_O', 'NGOAI_O', 80, 120, 3500000000, 4500000000, 'Có sân để xe, yên tĩnh');
 
 INSERT INTO thong_bao (ngay, ten_thong_bao, noi_dung, nguoi_tao_id) VALUES
   ('2026-11-03', 'Quy định mới về hồ sơ ký gửi', 'Từ ngày 05/11, mọi hồ sơ ký gửi bất động sản phải có bản sao giấy tờ pháp lý và ảnh chụp thực tế trước khi đăng tin.', 101),

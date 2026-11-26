@@ -53,14 +53,18 @@ Mỗi khi nhóm sửa `01_V1__init_schema.sql` hoặc `02_V2__sample_data.sql` (
 2. Chạy `docker compose down -v` rồi `docker compose up -d`.
 3. Kiểm tra lại bằng lệnh ở mục "Kiểm tra dữ liệu".
 
-Lần cập nhật gần nhất (issue #52, Sprint 2):
+Lần cập nhật gần nhất (issue #78):
+- `nhu_cau` thêm `gia_min`, `gia_max` (`BIGINT`, VND, cho phép NULL). Ràng buộc `ck_nhu_cau_gia`: hoặc cả hai cùng NULL, hoặc `gia_min > 0` và `gia_max >= gia_min`.
+- Dữ liệu mẫu NC402–NC406, NC1501–NC1503 đã có khoảng giá; NC401 để NULL để thử trường hợp chưa có giá.
+
+**Sau khi pull bản này, mọi người bắt buộc chạy `docker compose down -v` rồi `docker compose up -d`**, nếu không backend sẽ báo lỗi validate schema khi khởi động.
+
+Lần cập nhật trước (issue #52, Sprint 2):
 - Bảng mới `chuc_vu` (`ma`, `ten`), có sẵn 3 dòng `TRUONG_PHONG`, `KE_TOAN`, `NHAN_VIEN`. `nhan_vien.chuc_vu` là khóa ngoại tới `chuc_vu.ma` (bỏ CHECK cũ).
 - `nhu_cau` thêm `trang_thai` (`CHO_DUYET`, `DA_DUYET`, `TU_CHOI`, mặc định `DA_DUYET`) và `ly_do_tu_choi` (chỉ có giá trị khi `TU_CHOI`).
 - Bảng mới `thong_bao_nguoi_dung`: trạng thái đã xem thông báo theo từng tài khoản.
 - `thong_bao.noi_dung` đổi từ `TEXT` sang `MEDIUMTEXT`.
 - `bieu_mau` thêm `ten_tep_goc`, `loai_tep` (`PDF`, `DOC`, `DOCX`, `XLS`, `XLSX`), `dung_luong`, `nguoi_tao_id` (khóa ngoại `tai_khoan`), `ngay_cap_nhat`; đều cho phép NULL.
-
-**Sau khi pull bản này, mọi người bắt buộc chạy `docker compose down -v` rồi `docker compose up -d`**, nếu không backend sẽ báo lỗi validate schema khi khởi động.
 
 Lần cập nhật trước (issue #34): bảng `khach_hang` thêm cột `trang_thai_duyet`.
 

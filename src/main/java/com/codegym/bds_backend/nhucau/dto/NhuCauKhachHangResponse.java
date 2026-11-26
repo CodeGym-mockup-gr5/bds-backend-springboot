@@ -15,6 +15,8 @@ public record NhuCauKhachHangResponse(
         ViTri viTri,
         BigDecimal dienTichMin,
         BigDecimal dienTichMax,
+        Long giaMin,
+        Long giaMax,
         String ghiChu) {
 
     public static NhuCauKhachHangResponse fromEntity(NhuCau nhuCau, KhachHang khachHang) {
@@ -27,6 +29,8 @@ public record NhuCauKhachHangResponse(
                 nhuCau.getViTri(),
                 nhuCau.getDienTichMin(),
                 nhuCau.getDienTichMax(),
+                nhuCau.getGiaMin(),
+                nhuCau.getGiaMax(),
                 nhuCau.getGhiChu());
     }
 }

@@ -59,6 +59,12 @@ public class NhuCau {
     @Column(name = "dien_tich_max", nullable = false, precision = 10, scale = 2)
     private BigDecimal dienTichMax;
 
+    @Column(name = "gia_min")
+    private Long giaMin;
+
+    @Column(name = "gia_max")
+    private Long giaMax;
+
     @Column(name = "ghi_chu", length = 50)
     private String ghiChu;
 

@@ -193,6 +193,8 @@ CREATE TABLE nhu_cau (
     vi_tri          VARCHAR(10)   NOT NULL,
     dien_tich_min   DECIMAL(10,2) NOT NULL COMMENT 'm2',
     dien_tich_max   DECIMAL(10,2) NOT NULL COMMENT 'm2',
+    gia_min         BIGINT        NULL     COMMENT 'VND',
+    gia_max         BIGINT        NULL     COMMENT 'VND',
     ghi_chu         VARCHAR(50)   NULL,
     trang_thai      VARCHAR(20)   NOT NULL DEFAULT 'DA_DUYET',
     ly_do_tu_choi   VARCHAR(255)  NULL,
@@ -203,6 +205,9 @@ CREATE TABLE nhu_cau (
     CONSTRAINT ck_nhu_cau_loai CHECK (loai_bds IN ('DAT', 'NHA_O')),
     CONSTRAINT ck_nhu_cau_vi_tri CHECK (vi_tri IN ('TRUNG_TAM', 'NGOAI_O')),
     CONSTRAINT ck_nhu_cau_dien_tich CHECK (dien_tich_min > 0 AND dien_tich_max >= dien_tich_min),
+    CONSTRAINT ck_nhu_cau_gia CHECK ((gia_min IS NULL AND gia_max IS NULL)
+                                     OR (gia_min IS NOT NULL AND gia_max IS NOT NULL
+                                         AND gia_min > 0 AND gia_max >= gia_min)),
     CONSTRAINT ck_nhu_cau_trang_thai CHECK (trang_thai IN ('CHO_DUYET', 'DA_DUYET', 'TU_CHOI')),
     CONSTRAINT ck_nhu_cau_ly_do_tu_choi CHECK (ly_do_tu_choi IS NULL OR trang_thai = 'TU_CHOI')
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
