@@ -1,5 +1,7 @@
 package com.codegym.bds_backend.auth.dto;
 
+import com.codegym.bds_backend.auth.validation.PasswordPolicy;
+import com.codegym.bds_backend.auth.validation.ValidPassword;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -21,8 +23,11 @@ public record RegisterRequest(
                 message = "Tên đăng nhập chỉ gồm chữ, số, dấu chấm, gạch ngang, gạch dưới")
         String tenDangNhap,
         @NotBlank(message = "Vui lòng nhập mật khẩu")
-        @Size(min = 8, max = 64, message = "Mật khẩu từ 8 đến 64 ký tự") String matKhau,
+        @ValidPassword
+        @Schema(description = PasswordPolicy.SCHEMA_DESCRIPTION)
+        String matKhau,
         @Schema(description = "Khách muốn đăng tin bán. true thì tài khoản chờ Admin duyệt mới được đăng tin; "
-                + "bỏ trống hoặc false coi như không đăng ký bán", example = "false")
+                + "bỏ trống hoặc false coi như không đăng ký bán",
+                example = "false")
         Boolean muonDangTinBan) {
 }

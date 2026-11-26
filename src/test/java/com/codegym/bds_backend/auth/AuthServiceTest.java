@@ -16,6 +16,7 @@ import com.codegym.bds_backend.auth.dto.ChangePasswordRequest;
 import com.codegym.bds_backend.auth.dto.LoginRequest;
 import com.codegym.bds_backend.auth.dto.LoginResponse;
 import com.codegym.bds_backend.auth.dto.RegisterRequest;
+import com.codegym.bds_backend.auth.dto.SetPasswordRequest;
 import com.codegym.bds_backend.auth.dto.ThongTinTaiKhoan;
 import com.codegym.bds_backend.common.enums.TrangThaiDuyet;
 import com.codegym.bds_backend.common.exception.BadRequestException;
@@ -251,14 +252,40 @@ class AuthServiceTest {
     }
 
     @Test
+    void shouldRejectRegistrationWhenPasswordContainsUsername() {
+        RegisterRequest req = new RegisterRequest(
+                "Nguyễn Văn An", "0912345678", "an@example.com", "012345678901",
+                "khach01", "MyKhach01@Pass", false);
+
+        BadRequestException ex = assertThrows(BadRequestException.class, () -> service.registerKhachHang(req));
+
+        assertEquals("Mật khẩu không được chứa tên đăng nhập hoặc email", ex.getMessage());
+        assertEquals("matKhau", ex.getErrors().get(0).field());
+        verify(taiKhoanRepository, never()).save(any());
+    }
+
+    @Test
+    void shouldRejectRegistrationWhenPasswordContainsEmailLocalPart() {
+        RegisterRequest req = new RegisterRequest(
+                "Nguyễn Văn An", "0912345678", "nguyenvanan@example.com", "012345678901",
+                "kh01", "MyNguyenvanan@1", false);
+
+        BadRequestException ex = assertThrows(BadRequestException.class, () -> service.registerKhachHang(req));
+
+        assertEquals("Mật khẩu không được chứa tên đăng nhập hoặc email", ex.getMessage());
+        assertEquals("matKhau", ex.getErrors().get(0).field());
+        verify(taiKhoanRepository, never()).save(any());
+    }
+
+    @Test
     void shouldChangePasswordSuccessfully() {
         TaiKhoan taiKhoan = taiKhoanNhanVien(2, false);
-        when(taiKhoanRepository.findById(1L)).thenReturn(Optional.of(taiKhoan));
-        when(passwordEncoder.matches("OldPass123", "hash")).thenReturn(true);
-        when(passwordEncoder.matches("NewPass123", "hash")).thenReturn(false);
-        when(passwordEncoder.encode("NewPass123")).thenReturn("new-hash");
+        when(taiKhoanRepository.findWithChuSoHuuById(1L)).thenReturn(Optional.of(taiKhoan));
+        when(passwordEncoder.matches("OldPass@123", "hash")).thenReturn(true);
+        when(passwordEncoder.matches("NewPass@123", "hash")).thenReturn(false);
+        when(passwordEncoder.encode("NewPass@123")).thenReturn("new-hash");
 
-        ChangePasswordRequest request = new ChangePasswordRequest("OldPass123", "NewPass123", "NewPass123");
+        ChangePasswordRequest request = new ChangePasswordRequest("OldPass@123", "NewPass@123", "NewPass@123");
 
         service.changePasswordTaiKhoan(1L, request);
 
@@ -270,51 +297,130 @@ class AuthServiceTest {
 
     @Test
     void shouldThrowBadRequestExceptionWhenConfirmPasswordDoesNotMatch() {
-        ChangePasswordRequest request = new ChangePasswordRequest("OldPass123", "NewPass123", "MismatchPass");
+        ChangePasswordRequest request = new ChangePasswordRequest("OldPass@123", "NewPass@123", "Mismatch@123");
         TaiKhoan taiKhoan = taiKhoanNhanVien(0, false);
-        when(taiKhoanRepository.findById(1L)).thenReturn(Optional.of(taiKhoan));
+        when(taiKhoanRepository.findWithChuSoHuuById(1L)).thenReturn(Optional.of(taiKhoan));
 
         BadRequestException ex = assertThrows(
                 BadRequestException.class, () -> service.changePasswordTaiKhoan(1L, request));
-        assertEquals("Mật khẩu mới phải từ 6 đến 32 ký tự và khớp nhau", ex.getMessage());
+        assertEquals("Xác nhận mật khẩu không khớp", ex.getMessage());
+        assertEquals("xacNhanMatKhau", ex.getErrors().get(0).field());
         verify(taiKhoanRepository, never()).save(any());
     }
 
     @Test
     void shouldThrowBusinessExceptionWhenOldPasswordIsIncorrect() {
         TaiKhoan taiKhoan = taiKhoanNhanVien(0, false);
-        when(taiKhoanRepository.findById(1L)).thenReturn(Optional.of(taiKhoan));
-        when(passwordEncoder.matches("WrongOldPass", "hash")).thenReturn(false);
+        when(taiKhoanRepository.findWithChuSoHuuById(1L)).thenReturn(Optional.of(taiKhoan));
+        when(passwordEncoder.matches("WrongOld@123", "hash")).thenReturn(false);
 
-        ChangePasswordRequest request = new ChangePasswordRequest("WrongOldPass", "NewPass123", "NewPass123");
+        ChangePasswordRequest request = new ChangePasswordRequest("WrongOld@123", "NewPass@123", "NewPass@123");
 
         BusinessException ex = assertThrows(
                 BusinessException.class, () -> service.changePasswordTaiKhoan(1L, request));
         assertEquals("Mật khẩu cũ không đúng", ex.getMessage());
+        assertEquals("matKhauCu", ex.getErrors().get(0).field());
         verify(taiKhoanRepository, never()).save(any());
     }
 
     @Test
     void shouldThrowBusinessExceptionWhenNewPasswordMatchesOldPassword() {
         TaiKhoan taiKhoan = taiKhoanNhanVien(0, false);
-        when(taiKhoanRepository.findById(1L)).thenReturn(Optional.of(taiKhoan));
-        when(passwordEncoder.matches("SamePass123", "hash")).thenReturn(true);
+        when(taiKhoanRepository.findWithChuSoHuuById(1L)).thenReturn(Optional.of(taiKhoan));
+        when(passwordEncoder.matches("SamePass@123", "hash")).thenReturn(true);
 
-        ChangePasswordRequest request = new ChangePasswordRequest("SamePass123", "SamePass123", "SamePass123");
+        ChangePasswordRequest request = new ChangePasswordRequest("SamePass@123", "SamePass@123", "SamePass@123");
 
         BusinessException ex = assertThrows(
                 BusinessException.class, () -> service.changePasswordTaiKhoan(1L, request));
         assertEquals("Mật khẩu mới không được trùng với mật khẩu cũ", ex.getMessage());
+        assertEquals("matKhauMoi", ex.getErrors().get(0).field());
+        verify(taiKhoanRepository, never()).save(any());
+    }
+
+    @Test
+    void shouldRejectChangePasswordWhenNewPasswordContainsUsername() {
+        TaiKhoan taiKhoan = taiKhoanNhanVien(0, false);
+        when(taiKhoanRepository.findWithChuSoHuuById(1L)).thenReturn(Optional.of(taiKhoan));
+        when(passwordEncoder.matches("OldPass@123", "hash")).thenReturn(true);
+        when(passwordEncoder.matches("MyNv101@Pass", "hash")).thenReturn(false);
+
+        ChangePasswordRequest request = new ChangePasswordRequest("OldPass@123", "MyNv101@Pass", "MyNv101@Pass");
+
+        BadRequestException ex = assertThrows(
+                BadRequestException.class, () -> service.changePasswordTaiKhoan(1L, request));
+        assertEquals("Mật khẩu không được chứa tên đăng nhập hoặc email", ex.getMessage());
+        assertEquals("matKhauMoi", ex.getErrors().get(0).field());
+        verify(taiKhoanRepository, never()).save(any());
+    }
+
+    @Test
+    void shouldRejectChangePasswordWhenNewPasswordContainsEmailLocalPart() {
+        TaiKhoan taiKhoan = taiKhoanNhanVien(0, false);
+        when(taiKhoanRepository.findWithChuSoHuuById(1L)).thenReturn(Optional.of(taiKhoan));
+        when(passwordEncoder.matches("OldPass@123", "hash")).thenReturn(true);
+        when(passwordEncoder.matches("MyLong.nt@1", "hash")).thenReturn(false);
+
+        ChangePasswordRequest request = new ChangePasswordRequest("OldPass@123", "MyLong.nt@1", "MyLong.nt@1");
+
+        BadRequestException ex = assertThrows(
+                BadRequestException.class, () -> service.changePasswordTaiKhoan(1L, request));
+        assertEquals("Mật khẩu không được chứa tên đăng nhập hoặc email", ex.getMessage());
+        assertEquals("matKhauMoi", ex.getErrors().get(0).field());
         verify(taiKhoanRepository, never()).save(any());
     }
 
     @Test
     void shouldThrowNotFoundExceptionWhenAccountDoesNotExist() {
-        when(taiKhoanRepository.findById(999L)).thenReturn(Optional.empty());
+        when(taiKhoanRepository.findWithChuSoHuuById(999L)).thenReturn(Optional.empty());
 
-        ChangePasswordRequest request = new ChangePasswordRequest("OldPass123", "NewPass123", "NewPass123");
+        ChangePasswordRequest request = new ChangePasswordRequest("OldPass@123", "NewPass@123", "NewPass@123");
 
         assertThrows(NotFoundException.class, () -> service.changePasswordTaiKhoan(999L, request));
+    }
+
+    @Test
+    void shouldSetPasswordSuccessfullyWhenAccountHasNoPasswordYet() {
+        TaiKhoan taiKhoan = taiKhoanNhanVien(3, false);
+        taiKhoan.setMatKhauHash(null);
+        taiKhoan.setBiKhoa(true);
+        when(tokenXacThucService.consumeToken("raw-token")).thenReturn(taiKhoan);
+        when(passwordEncoder.encode("NewPass@123")).thenReturn("encoded-pass");
+
+        service.setMatKhau(new SetPasswordRequest("raw-token", "NewPass@123"));
+
+        assertEquals("encoded-pass", taiKhoan.getMatKhauHash());
+        assertEquals(0, taiKhoan.getSoLanDangNhapSai());
+        assertFalse(taiKhoan.isBiKhoa());
+    }
+
+    @Test
+    void shouldRejectSetPasswordWhenMatchesOldPassword() {
+        TaiKhoan taiKhoan = taiKhoanNhanVien(0, false);
+        when(tokenXacThucService.consumeToken("raw-token")).thenReturn(taiKhoan);
+        when(passwordEncoder.matches("OldPass@123", "hash")).thenReturn(true);
+
+        BusinessException ex = assertThrows(
+                BusinessException.class,
+                () -> service.setMatKhau(new SetPasswordRequest("raw-token", "OldPass@123")));
+
+        assertEquals(HttpStatus.CONFLICT, ex.getStatus());
+        assertEquals("matKhau", ex.getErrors().get(0).field());
+        assertEquals("Mật khẩu mới không được trùng với mật khẩu cũ", ex.getMessage());
+    }
+
+    @Test
+    void shouldRejectSetPasswordWhenContainsUsername() {
+        TaiKhoan taiKhoan = taiKhoanNhanVien(0, false);
+        when(tokenXacThucService.consumeToken("raw-token")).thenReturn(taiKhoan);
+        when(passwordEncoder.matches("PassNv101@1", "hash")).thenReturn(false);
+
+        BadRequestException ex = assertThrows(
+                BadRequestException.class,
+                () -> service.setMatKhau(new SetPasswordRequest("raw-token", "PassNv101@1")));
+
+        assertEquals("matKhau", ex.getErrors().get(0).field());
+        assertEquals("Mật khẩu không được chứa tên đăng nhập hoặc email", ex.getMessage());
     }
 
     private void stubSuccessfulRegistration() {
@@ -327,7 +433,7 @@ class AuthServiceTest {
             khachHang.setId(12L);
             return khachHang;
         });
-        when(passwordEncoder.encode("matkhau123")).thenReturn("encoded");
+        when(passwordEncoder.encode("MatKhau@123")).thenReturn("encoded");
         when(taiKhoanRepository.save(any(TaiKhoan.class))).thenAnswer(call -> {
             TaiKhoan taiKhoan = call.getArgument(0);
             taiKhoan.setId(7L);
@@ -341,12 +447,13 @@ class AuthServiceTest {
 
     private static RegisterRequest request(Boolean muonDangTinBan) {
         return new RegisterRequest("Nguyễn Văn An", "0912345678", "an@example.com", "012345678901", "khach01",
-                "matkhau123", muonDangTinBan);
+                "MatKhau@123", muonDangTinBan);
     }
 
     private static TaiKhoan taiKhoanNhanVien(int soLanSai, boolean laAdmin) {
         NhanVien nhanVien = new NhanVien();
         nhanVien.setHoTen("Nguyễn Thành Long");
+        nhanVien.setEmail("long.nt@example.com");
         nhanVien.setLaAdmin(laAdmin);
         TaiKhoan taiKhoan = new TaiKhoan();
         taiKhoan.setId(1L);
