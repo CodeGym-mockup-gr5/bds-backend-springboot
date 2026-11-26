@@ -37,7 +37,7 @@ Mật khẩu `root` chỉ dùng trên máy cá nhân khi phát triển. Không d
 
     docker exec bds-mysql mysql -uroot -proot --default-character-set=utf8mb4 bds_broker -e "SHOW TABLES; SELECT ma_bds, ngay_dang FROM bat_dong_san; SELECT ma_nv, la_admin FROM nhan_vien;"
 
-Kết quả đúng: 10 bảng + 1 view (`v_thong_ke_thang`), 12 bất động sản có cột `ngay_dang`, 6 nhân viên.
+Kết quả đúng: 12 bảng + 1 view (`v_thong_ke_thang`), 3 chức vụ, 6 nhân viên. Số bất động sản phụ thuộc các file dữ liệu demo `03_demo_*.sql`.
 
 ## Lệnh thường dùng
 | Việc cần làm | Lệnh |
@@ -53,7 +53,16 @@ Mỗi khi nhóm sửa `01_V1__init_schema.sql` hoặc `02_V2__sample_data.sql` (
 2. Chạy `docker compose down -v` rồi `docker compose up -d`.
 3. Kiểm tra lại bằng lệnh ở mục "Kiểm tra dữ liệu".
 
-Lần cập nhật gần nhất (issue #34): bảng `khach_hang` thêm cột `trang_thai_duyet`. Phải tạo lại database bằng `docker compose down -v` rồi `docker compose up -d`, nếu không backend sẽ báo lỗi validate schema khi khởi động.
+Lần cập nhật gần nhất (issue #52, Sprint 2):
+- Bảng mới `chuc_vu` (`ma`, `ten`), có sẵn 3 dòng `TRUONG_PHONG`, `KE_TOAN`, `NHAN_VIEN`. `nhan_vien.chuc_vu` là khóa ngoại tới `chuc_vu.ma` (bỏ CHECK cũ).
+- `nhu_cau` thêm `trang_thai` (`CHO_DUYET`, `DA_DUYET`, `TU_CHOI`, mặc định `DA_DUYET`) và `ly_do_tu_choi` (chỉ có giá trị khi `TU_CHOI`).
+- Bảng mới `thong_bao_nguoi_dung`: trạng thái đã xem thông báo theo từng tài khoản.
+- `thong_bao.noi_dung` đổi từ `TEXT` sang `MEDIUMTEXT`.
+- `bieu_mau` thêm `ten_tep_goc`, `loai_tep` (`PDF`, `DOC`, `DOCX`, `XLS`, `XLSX`), `dung_luong`, `nguoi_tao_id` (khóa ngoại `tai_khoan`), `ngay_cap_nhat`; đều cho phép NULL.
+
+**Sau khi pull bản này, mọi người bắt buộc chạy `docker compose down -v` rồi `docker compose up -d`**, nếu không backend sẽ báo lỗi validate schema khi khởi động.
+
+Lần cập nhật trước (issue #34): bảng `khach_hang` thêm cột `trang_thai_duyet`.
 
 Lệnh `down -v` xóa toàn bộ dữ liệu trong container. Chấp nhận được vì đây chỉ là dữ liệu mẫu.
 

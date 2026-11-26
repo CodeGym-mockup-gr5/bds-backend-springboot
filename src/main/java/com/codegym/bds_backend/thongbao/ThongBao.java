@@ -39,7 +39,7 @@ public class ThongBao {
     private String tenThongBao;
 
     @JdbcTypeCode(SqlTypes.LONGVARCHAR)
-    @Column(name = "noi_dung", nullable = false, columnDefinition = "text")
+    @Column(name = "noi_dung", nullable = false, columnDefinition = "mediumtext")
     private String noiDung;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)

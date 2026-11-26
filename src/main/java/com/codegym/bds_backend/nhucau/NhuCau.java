@@ -62,6 +62,14 @@ public class NhuCau {
     @Column(name = "ghi_chu", length = 50)
     private String ghiChu;
 
+    @Enumerated(EnumType.STRING)
+    @JdbcTypeCode(SqlTypes.VARCHAR)
+    @Column(name = "trang_thai", nullable = false, length = 20)
+    private TrangThaiNhuCau trangThai = TrangThaiNhuCau.DA_DUYET;
+
+    @Column(name = "ly_do_tu_choi", length = 255)
+    private String lyDoTuChoi;
+
     @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
 }
