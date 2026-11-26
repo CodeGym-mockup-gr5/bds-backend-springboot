@@ -3,6 +3,7 @@
 -- Schema MySQL 8.0.16+ (CHECK constraint duoc thuc thi tu ban 8.0.16)
 -- Nguon: SRS v4.0 + Logical Data Model (21 quyet dinh A01-A21 da chot, 09/11/2026)
 --   Khop Logical ERD: 10 bang, khong con created_at/updated_at (A14).
+--   Sprint 2 (#52): them chuc_vu, thong_bao_nguoi_dung; sua nhu_cau, thong_bao, bieu_mau.
 --
 -- Tao database truoc khi chay (Flyway/Spring Boot se chay file nay):
 --   CREATE DATABASE bds_broker CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
@@ -13,12 +14,29 @@
 --     trong cung transaction (Q06). Cot ma_* cho phep NULL o muc DB; bat buoc co ma
 --     la quy tac cua ung dung.
 --   * Xoa mem: cot deleted_at, NULL = dang hoat dong (Q24). Chi co o nhan_vien,
---     khach_hang, bat_dong_san, giao_dich, thong_bao, bieu_mau (NgayXoa trong LDM).
+--     khach_hang, bat_dong_san, giao_dich, thong_bao, bieu_mau (NgayXoa trong LDM), chuc_vu.
 --   * Gia tri liet ke luu ma ASCII de map voi Java enum (@Enumerated STRING) (Q25).
 --   * Tien luu bang VND, khong co phan le (Q26).
 -- =====================================================================
 
 SET NAMES utf8mb4;
+
+-- ---------------------------------------------------------------------
+-- Danh muc chuc vu (Sprint 2). nhan_vien.chuc_vu tham chieu cot ma.
+-- ---------------------------------------------------------------------
+CREATE TABLE chuc_vu (
+    id              BIGINT       NOT NULL AUTO_INCREMENT,
+    ma              VARCHAR(20)  NOT NULL,
+    ten             VARCHAR(50)  NOT NULL,
+    deleted_at      DATETIME     NULL,
+    CONSTRAINT pk_chuc_vu PRIMARY KEY (id),
+    CONSTRAINT uq_chuc_vu_ma UNIQUE (ma)
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
+
+INSERT INTO chuc_vu (ma, ten) VALUES
+    ('TRUONG_PHONG', 'Trưởng phòng'),
+    ('KE_TOAN', 'Kế toán'),
+    ('NHAN_VIEN', 'Nhân viên');
 
 -- ---------------------------------------------------------------------
 -- Nhan vien (SE2103). Quyen Admin: cot la_admin (LDM E01).
@@ -40,7 +58,7 @@ CREATE TABLE nhan_vien (
     CONSTRAINT uq_nhan_vien_email UNIQUE (email),
     CONSTRAINT ck_nhan_vien_gioi_tinh CHECK (gioi_tinh IN ('NAM', 'NU')),
     CONSTRAINT ck_nhan_vien_sdt CHECK (so_dien_thoai REGEXP '^0[0-9]{9}$'),
-    CONSTRAINT ck_nhan_vien_chuc_vu CHECK (chuc_vu IN ('TRUONG_PHONG', 'KE_TOAN', 'NHAN_VIEN'))
+    CONSTRAINT fk_nhan_vien_chuc_vu FOREIGN KEY (chuc_vu) REFERENCES chuc_vu (ma)
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
 
 -- ---------------------------------------------------------------------
@@ -176,14 +194,20 @@ CREATE TABLE nhu_cau (
     dien_tich_min   DECIMAL(10,2) NOT NULL COMMENT 'm2',
     dien_tich_max   DECIMAL(10,2) NOT NULL COMMENT 'm2',
     ghi_chu         VARCHAR(50)   NULL,
+    trang_thai      VARCHAR(20)   NOT NULL DEFAULT 'DA_DUYET',
+    ly_do_tu_choi   VARCHAR(255)  NULL,
     deleted_at      DATETIME      NULL,
     CONSTRAINT pk_nhu_cau PRIMARY KEY (id),
     CONSTRAINT uq_nhu_cau_ma UNIQUE (ma_nc),
     CONSTRAINT fk_nhu_cau_khach_hang FOREIGN KEY (khach_hang_id) REFERENCES khach_hang (id),
     CONSTRAINT ck_nhu_cau_loai CHECK (loai_bds IN ('DAT', 'NHA_O')),
     CONSTRAINT ck_nhu_cau_vi_tri CHECK (vi_tri IN ('TRUNG_TAM', 'NGOAI_O')),
-    CONSTRAINT ck_nhu_cau_dien_tich CHECK (dien_tich_min > 0 AND dien_tich_max >= dien_tich_min)
+    CONSTRAINT ck_nhu_cau_dien_tich CHECK (dien_tich_min > 0 AND dien_tich_max >= dien_tich_min),
+    CONSTRAINT ck_nhu_cau_trang_thai CHECK (trang_thai IN ('CHO_DUYET', 'DA_DUYET', 'TU_CHOI')),
+    CONSTRAINT ck_nhu_cau_ly_do_tu_choi CHECK (ly_do_tu_choi IS NULL OR trang_thai = 'TU_CHOI')
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
+
+CREATE INDEX ix_nhu_cau_trang_thai ON nhu_cau (trang_thai);
 
 -- ---------------------------------------------------------------------
 -- Giao dich (SE2108). Loi nhuan = so tien x ty le hoa hong (Q10).
@@ -229,12 +253,30 @@ CREATE TABLE thong_bao (
     id              BIGINT       NOT NULL AUTO_INCREMENT,
     ngay            DATE         NOT NULL,
     ten_thong_bao   VARCHAR(255) NOT NULL,
-    noi_dung        TEXT         NOT NULL,
+    noi_dung        MEDIUMTEXT   NOT NULL,
     nguoi_tao_id    BIGINT       NOT NULL,
     deleted_at      DATETIME     NULL,
     CONSTRAINT pk_thong_bao PRIMARY KEY (id),
     CONSTRAINT fk_thong_bao_nguoi_tao FOREIGN KEY (nguoi_tao_id) REFERENCES nhan_vien (id)
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
+
+-- ---------------------------------------------------------------------
+-- Trang thai da xem thong bao cua tung tai khoan (Sprint 2)
+-- ---------------------------------------------------------------------
+CREATE TABLE thong_bao_nguoi_dung (
+    id              BIGINT       NOT NULL AUTO_INCREMENT,
+    thong_bao_id    BIGINT       NOT NULL,
+    tai_khoan_id    BIGINT       NOT NULL,
+    da_xem          BOOLEAN      NOT NULL DEFAULT FALSE,
+    xem_luc         DATETIME     NULL,
+    created_at      DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT pk_thong_bao_nguoi_dung PRIMARY KEY (id),
+    CONSTRAINT uq_thong_bao_nguoi_dung UNIQUE (thong_bao_id, tai_khoan_id),
+    CONSTRAINT fk_tbnd_thong_bao FOREIGN KEY (thong_bao_id) REFERENCES thong_bao (id),
+    CONSTRAINT fk_tbnd_tai_khoan FOREIGN KEY (tai_khoan_id) REFERENCES tai_khoan (id)
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
+
+CREATE INDEX ix_tbnd_tai_khoan_da_xem ON thong_bao_nguoi_dung (tai_khoan_id, da_xem);
 
 -- ---------------------------------------------------------------------
 -- Ho so bieu mau (SE2109)
@@ -245,10 +287,17 @@ CREATE TABLE bieu_mau (
     ten_bieu_mau    VARCHAR(255) NOT NULL,
     noi_dung        TEXT         NULL     COMMENT 'Mo ta noi dung bieu mau',
     duong_dan_tep   VARCHAR(500) NOT NULL,
+    ten_tep_goc     VARCHAR(255) NULL,
+    loai_tep        VARCHAR(10)  NULL,
+    dung_luong      BIGINT       NULL     COMMENT 'Byte',
+    nguoi_tao_id    BIGINT       NULL,
+    ngay_cap_nhat   DATETIME     NULL,
     deleted_at      DATETIME     NULL,
     CONSTRAINT pk_bieu_mau PRIMARY KEY (id),
-    CONSTRAINT uq_bieu_mau_ma UNIQUE (ma_bm)
-) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
+    CONSTRAINT uq_bieu_mau_ma UNIQUE (ma_bm),
+    CONSTRAINT fk_bieu_mau_nguoi_tao FOREIGN KEY (nguoi_tao_id) REFERENCES tai_khoan (id),
+    CONSTRAINT ck_bieu_mau_loai_tep CHECK (loai_tep IS NULL OR loai_tep IN ('PDF', 'DOC', 'DOCX', 'XLS', 'XLSX'))
+)ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
 
 -- ---------------------------------------------------------------------
 -- Thong ke theo thang (SE2110, Q10, Q27)
