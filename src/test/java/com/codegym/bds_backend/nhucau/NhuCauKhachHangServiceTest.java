@@ -70,6 +70,8 @@ class NhuCauKhachHangServiceTest {
         nhuCau.setViTri(ViTri.TRUNG_TAM);
         nhuCau.setDienTichMin(new BigDecimal("70"));
         nhuCau.setDienTichMax(new BigDecimal("100"));
+        nhuCau.setGiaMin(2_500_000_000L);
+        nhuCau.setGiaMax(3_500_000_000L);
         nhuCau.setGhiChu("Gần trường học");
     }
 
@@ -111,6 +113,8 @@ class NhuCauKhachHangServiceTest {
         assertEquals(ViTri.TRUNG_TAM, dong.viTri());
         assertEquals(new BigDecimal("70"), dong.dienTichMin());
         assertEquals(new BigDecimal("100"), dong.dienTichMax());
+        assertEquals(2_500_000_000L, dong.giaMin());
+        assertEquals(3_500_000_000L, dong.giaMax());
     }
 
     @Test
