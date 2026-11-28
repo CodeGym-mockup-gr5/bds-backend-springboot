@@ -19,9 +19,13 @@ public record UpdateKhachHangProfileRequest(
         GioiTinh gioiTinh,
 
         @Size(max = 255, message = "Địa chỉ tối đa 255 ký tự")
-        String diaChi) {
+        String diaChi,
+
+        @Pattern(regexp = "^[0-9]{12}$", message = "Số CCCD gồm đúng 12 chữ số")
+        String soCccd) {
 
     public UpdateKhachHangProfileRequest {
         diaChi = (diaChi == null || diaChi.isBlank()) ? null : diaChi.trim();
+        soCccd = (soCccd == null || soCccd.isBlank()) ? null : soCccd.trim();
     }
 }

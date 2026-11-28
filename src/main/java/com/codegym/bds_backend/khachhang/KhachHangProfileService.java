@@ -2,6 +2,7 @@ package com.codegym.bds_backend.khachhang;
 
 import com.codegym.bds_backend.auth.TaiKhoan;
 import com.codegym.bds_backend.auth.TaiKhoanRepository;
+import com.codegym.bds_backend.common.exception.BusinessException;
 import com.codegym.bds_backend.common.exception.NotFoundException;
 import com.codegym.bds_backend.khachhang.dto.KhachHangProfileResponse;
 import com.codegym.bds_backend.khachhang.dto.UpdateKhachHangProfileRequest;
@@ -26,6 +27,14 @@ public class KhachHangProfileService {
     @Transactional
     public KhachHangProfileResponse updateProfileKhachHang(Long taiKhoanId, UpdateKhachHangProfileRequest request) {
         KhachHang khachHang = findKhachHangByTaiKhoanId(taiKhoanId);
+
+        boolean cccdDangTrong = khachHang.getSoCccd() == null || khachHang.getSoCccd().isBlank();
+        if (cccdDangTrong && request.soCccd() != null) {
+            if (khachHangRepository.countSoCccdIncludingDeleted(request.soCccd(), khachHang.getId()) > 0) {
+                throw BusinessException.fieldConflict("soCccd", "Số CCCD đã tồn tại");
+            }
+            khachHang.setSoCccd(request.soCccd());
+        }
 
         khachHang.setHoTen(request.hoTen().trim());
         khachHang.setNgaySinh(request.ngaySinh());

@@ -7,6 +7,9 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -14,6 +17,7 @@ import com.codegym.bds_backend.auth.TaiKhoan;
 import com.codegym.bds_backend.auth.TaiKhoanRepository;
 import com.codegym.bds_backend.common.enums.GioiTinh;
 import com.codegym.bds_backend.common.enums.TrangThaiDuyet;
+import com.codegym.bds_backend.common.exception.BusinessException;
 import com.codegym.bds_backend.common.exception.NotFoundException;
 import com.codegym.bds_backend.khachhang.dto.KhachHangProfileResponse;
 import com.codegym.bds_backend.khachhang.dto.UpdateKhachHangProfileRequest;
@@ -26,6 +30,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.HttpStatus;
 
 @ExtendWith(MockitoExtension.class)
 class KhachHangProfileServiceTest {
@@ -100,7 +105,7 @@ class KhachHangProfileServiceTest {
     }
 
     @Test
-    void shouldUpdateAllowedProfileFieldsAndKeepLockedFieldsUnchanged() {
+    void shouldKeepExistingSoCccdLockedWhenAlreadyPresent() {
         when(taiKhoanRepository.findWithChuSoHuuById(5L)).thenReturn(Optional.of(taiKhoan));
         when(khachHangRepository.save(any(KhachHang.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
@@ -108,7 +113,8 @@ class KhachHangProfileServiceTest {
                 "  Trần Thị Hoa Mới  ",
                 LocalDate.of(1996, 1, 2),
                 GioiTinh.NU,
-                "  20 Bạch Đằng, Đà Nẵng  ");
+                "  20 Bạch Đằng, Đà Nẵng  ",
+                "048195000999");
 
         KhachHangProfileResponse updated = profileService.updateProfileKhachHang(5L, request);
 
@@ -123,11 +129,55 @@ class KhachHangProfileServiceTest {
         assertTrue(updated.laKhMua());
         assertFalse(updated.laKhBan());
         assertEquals(TrangThaiDuyet.DA_DUYET, updated.trangThaiDuyet());
+        verify(khachHangRepository, never()).countSoCccdIncludingDeleted(anyString(), anyLong());
         verify(khachHangRepository).save(khachHang);
     }
 
     @Test
-    void shouldNormalizeBlankDiaChiToNull() {
+    void shouldAllowSettingSoCccdOnceWhenCurrentlyEmpty() {
+        khachHang.setSoCccd(null);
+        when(taiKhoanRepository.findWithChuSoHuuById(5L)).thenReturn(Optional.of(taiKhoan));
+        when(khachHangRepository.countSoCccdIncludingDeleted("048195000999", 20L)).thenReturn(0L);
+        when(khachHangRepository.save(any(KhachHang.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        UpdateKhachHangProfileRequest request = new UpdateKhachHangProfileRequest(
+                "Trần Thị Hoa",
+                LocalDate.of(1995, 8, 15),
+                GioiTinh.NU,
+                "10 Lê Lợi, Đà Nẵng",
+                "048195000999");
+
+        KhachHangProfileResponse updated = profileService.updateProfileKhachHang(5L, request);
+
+        assertEquals("048195000999", updated.soCccd());
+        verify(khachHangRepository).countSoCccdIncludingDeleted("048195000999", 20L);
+        verify(khachHangRepository).save(khachHang);
+    }
+
+    @Test
+    void shouldThrowConflictWhenSettingDuplicateSoCccdOnEmptyProfile() {
+        khachHang.setSoCccd(null);
+        when(taiKhoanRepository.findWithChuSoHuuById(5L)).thenReturn(Optional.of(taiKhoan));
+        when(khachHangRepository.countSoCccdIncludingDeleted("048195000888", 20L)).thenReturn(1L);
+
+        UpdateKhachHangProfileRequest request = new UpdateKhachHangProfileRequest(
+                "Trần Thị Hoa",
+                LocalDate.of(1995, 8, 15),
+                GioiTinh.NU,
+                "10 Lê Lợi",
+                "048195000888");
+
+        BusinessException exception = assertThrows(
+                BusinessException.class,
+                () -> profileService.updateProfileKhachHang(5L, request));
+        assertEquals(HttpStatus.CONFLICT, exception.getStatus());
+        assertEquals("soCccd", exception.getErrors().get(0).field());
+        assertEquals("Số CCCD đã tồn tại", exception.getErrors().get(0).message());
+        verify(khachHangRepository, never()).save(any());
+    }
+
+    @Test
+    void shouldNormalizeBlankDiaChiToNullAndNotClearExistingSoCccd() {
         when(taiKhoanRepository.findWithChuSoHuuById(5L)).thenReturn(Optional.of(taiKhoan));
         when(khachHangRepository.save(any(KhachHang.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
@@ -135,6 +185,7 @@ class KhachHangProfileServiceTest {
                 "Trần Thị Hoa",
                 null,
                 null,
+                "   ",
                 "   ");
 
         KhachHangProfileResponse updated = profileService.updateProfileKhachHang(5L, request);
@@ -143,5 +194,6 @@ class KhachHangProfileServiceTest {
         assertEquals("048195000123", updated.soCccd());
         assertEquals("hoa.tran@example.com", updated.email());
         assertEquals("0905123456", updated.soDienThoai());
+        verify(khachHangRepository, never()).countSoCccdIncludingDeleted(anyString(), anyLong());
     }
 }

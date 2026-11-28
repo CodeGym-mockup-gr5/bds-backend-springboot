@@ -16,6 +16,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.codegym.bds_backend.auth.JwtPrincipal;
 import com.codegym.bds_backend.common.enums.GioiTinh;
 import com.codegym.bds_backend.common.enums.TrangThaiDuyet;
+import com.codegym.bds_backend.common.exception.BusinessException;
 import com.codegym.bds_backend.khachhang.dto.KhachHangProfileResponse;
 import com.codegym.bds_backend.khachhang.dto.UpdateKhachHangProfileRequest;
 import java.time.LocalDate;
@@ -95,7 +96,7 @@ class KhachHangProfileControllerTest {
     }
 
     @Test
-    void shouldUpdateProfileAndIgnoreLockedFieldsWhenLoggedInAsKhachHang() throws Exception {
+    void shouldUpdateProfileAndIgnoreLockedEmailPhoneWhilePassingSoCccd() throws Exception {
         KhachHangProfileResponse response = new KhachHangProfileResponse(
                 20L,
                 "MKH-0020",
@@ -120,7 +121,7 @@ class KhachHangProfileControllerTest {
                   "diaChi": "10 Lê Lợi, Đà Nẵng",
                   "soDienThoai": "0999888777",
                   "email": "fake@example.com",
-                  "soCccd": "999999999999"
+                  "soCccd": "048195000123"
                 }
                 """;
 
@@ -141,7 +142,8 @@ class KhachHangProfileControllerTest {
                         "Trần Thị Hoa",
                         LocalDate.of(1995, 8, 15),
                         GioiTinh.NU,
-                        "10 Lê Lợi, Đà Nẵng"));
+                        "10 Lê Lợi, Đà Nẵng",
+                        "048195000123"));
     }
 
     @Test
@@ -149,7 +151,8 @@ class KhachHangProfileControllerTest {
         String body = """
                 {
                   "hoTen": "",
-                  "ngaySinh": "2099-01-01"
+                  "ngaySinh": "2099-01-01",
+                  "soCccd": "12345"
                 }
                 """;
 
@@ -162,6 +165,28 @@ class KhachHangProfileControllerTest {
                 .andExpect(jsonPath("$.errors").isArray());
 
         verify(khachHangProfileService, never()).updateProfileKhachHang(any(), any());
+    }
+
+    @Test
+    void shouldReturnConflictWithFieldErrorWhenSoCccdDuplicates() throws Exception {
+        when(khachHangProfileService.updateProfileKhachHang(eq(5L), any(UpdateKhachHangProfileRequest.class)))
+                .thenThrow(BusinessException.fieldConflict("soCccd", "Số CCCD đã tồn tại"));
+
+        String body = """
+                {
+                  "hoTen": "Trần Thị Hoa",
+                  "soCccd": "048195000888"
+                }
+                """;
+
+        mockMvc.perform(put(URL)
+                        .with(user(5L, "ROLE_KHACH_HANG"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.success", is(false)))
+                .andExpect(jsonPath("$.errors[0].field", is("soCccd")))
+                .andExpect(jsonPath("$.errors[0].message", is("Số CCCD đã tồn tại")));
     }
 
     @Test
