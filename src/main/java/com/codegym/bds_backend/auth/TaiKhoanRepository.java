@@ -9,6 +9,8 @@ import org.springframework.data.repository.query.Param;
 public interface TaiKhoanRepository extends JpaRepository<TaiKhoan, Long> {
     Optional<TaiKhoan> findByTenDangNhap(String tenDangNhap);
 
+    Optional<TaiKhoan> findByKhachHangId(Long khachHangId);
+
     boolean existsByTenDangNhap(String tenDangNhap);
 
     List<TaiKhoan> findAllByMatKhauHashIsNull();

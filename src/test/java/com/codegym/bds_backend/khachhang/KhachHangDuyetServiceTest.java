@@ -89,6 +89,7 @@ class KhachHangDuyetServiceTest {
         khachHang.setHoTen("Nguyễn Văn An");
         khachHang.setSoDienThoai("0912345678");
         khachHang.setEmail("an@example.com");
+        khachHang.setSoCccd("001234567890");
         when(khachHangRepository.findByLaKhBanTrueAndTrangThaiDuyet(eq(TrangThaiDuyet.CHO_DUYET), any(Pageable.class)))
                 .thenAnswer(call -> new PageImpl<>(List.of(khachHang), call.getArgument(1), 6));
 
@@ -100,7 +101,8 @@ class KhachHangDuyetServiceTest {
         assertEquals(5, captor.getValue().getPageSize());
         assertEquals(Sort.by(Sort.Direction.ASC, "id"), captor.getValue().getSort());
         assertEquals(1, response.content().size());
-        assertEquals(new KhachHangChoDuyetResponse(12L, "KH012", "Nguyễn Văn An", "0912345678", "an@example.com"),
+        assertEquals(new KhachHangChoDuyetResponse(
+                12L, "KH012", "Nguyễn Văn An", "0912345678", "an@example.com", "001234567890"),
                 response.content().get(0));
         assertEquals(6, response.totalElements());
     }

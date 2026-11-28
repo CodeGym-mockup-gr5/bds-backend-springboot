@@ -17,9 +17,28 @@ public interface KhachHangRepository extends JpaRepository<KhachHang, Long> {
 
     boolean existsByEmailIgnoreCaseAndIdNot(String email, Long id);
 
+    @Query(value = "SELECT COUNT(*) FROM khach_hang WHERE so_cccd = :soCccd",
+            nativeQuery = true)
+    long countAllSoCccdIncludingDeleted(@Param("soCccd") String soCccd);
+
     @Query(value = "SELECT COUNT(*) FROM khach_hang WHERE so_cccd = :soCccd AND id <> :id",
             nativeQuery = true)
     long countSoCccdIncludingDeleted(@Param("soCccd") String soCccd, @Param("id") Long id);
+
+    @Query("SELECT kh FROM KhachHang kh "
+            + "WHERE (:laKhMua IS NULL OR kh.laKhMua = :laKhMua) "
+            + "AND (:laKhBan IS NULL OR kh.laKhBan = :laKhBan) "
+            + "AND (:keyword IS NULL "
+            + "OR LOWER(kh.maKh) LIKE LOWER(CONCAT('%', :keyword, '%')) "
+            + "OR LOWER(kh.hoTen) LIKE LOWER(CONCAT('%', :keyword, '%')) "
+            + "OR LOWER(COALESCE(kh.email, '')) LIKE LOWER(CONCAT('%', :keyword, '%')) "
+            + "OR (:includePhoneSearch = true AND kh.soDienThoai LIKE CONCAT('%', :keyword, '%')))")
+    Page<KhachHang> searchKhachHang(
+            @Param("keyword") String keyword,
+            @Param("laKhMua") Boolean laKhMua,
+            @Param("laKhBan") Boolean laKhBan,
+            @Param("includePhoneSearch") boolean includePhoneSearch,
+            Pageable pageable);
 
     Page<KhachHang> findByLaKhBanTrueAndTrangThaiDuyet(TrangThaiDuyet trangThaiDuyet, Pageable pageable);
 }
