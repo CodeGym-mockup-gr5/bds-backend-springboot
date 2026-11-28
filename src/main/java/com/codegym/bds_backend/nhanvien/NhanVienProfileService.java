@@ -1,6 +1,5 @@
 package com.codegym.bds_backend.nhanvien;
 
-import com.codegym.bds_backend.common.exception.BusinessException;
 import com.codegym.bds_backend.common.exception.NotFoundException;
 import com.codegym.bds_backend.nhanvien.dto.NhanVienProfileResponse;
 import com.codegym.bds_backend.nhanvien.dto.UpdateNhanVienProfileRequest;
@@ -26,17 +25,10 @@ public class NhanVienProfileService {
     public NhanVienProfileResponse updateProfileNhanVien(Long taiKhoanId, UpdateNhanVienProfileRequest request) {
         NhanVien nhanVien = findNhanVienByTaiKhoanId(taiKhoanId);
 
-        String email = request.email().trim().toLowerCase();
-        if (nhanVienRepository.existsByEmailIgnoreCaseAndIdNot(email, nhanVien.getId())) {
-            throw BusinessException.fieldConflict("email", "Email đã được sử dụng bởi nhân viên khác");
-        }
-
         nhanVien.setHoTen(request.hoTen().trim());
         nhanVien.setNgaySinh(request.ngaySinh());
         nhanVien.setGioiTinh(request.gioiTinh());
         nhanVien.setDiaChi(request.diaChi().trim());
-        nhanVien.setSoDienThoai(request.soDienThoai().trim());
-        nhanVien.setEmail(email);
 
         NhanVien saved = nhanVienRepository.save(nhanVien);
         log.info("Cập nhật thông tin cá nhân thành công cho nhân viên: {}", saved.getMaNv());
@@ -62,4 +54,3 @@ public class NhanVienProfileService {
                 nv.isLaAdmin());
     }
 }
-

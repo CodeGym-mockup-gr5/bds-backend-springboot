@@ -4,12 +4,10 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.codegym.bds_backend.common.enums.GioiTinh;
-import com.codegym.bds_backend.common.exception.BusinessException;
 import com.codegym.bds_backend.common.exception.NotFoundException;
 import com.codegym.bds_backend.nhanvien.dto.NhanVienProfileResponse;
 import com.codegym.bds_backend.nhanvien.dto.UpdateNhanVienProfileRequest;
@@ -69,50 +67,24 @@ class NhanVienProfileServiceTest {
     }
 
     @Test
-    void shouldUpdateProfileNhanVienSuccessfully() {
+    void shouldUpdateAllowedProfileFieldsAndKeepEmailAndPhoneUnchanged() {
         when(nhanVienRepository.findByTaiKhoanId(1L)).thenReturn(Optional.of(nhanVien));
-        when(nhanVienRepository.existsByEmailIgnoreCaseAndIdNot("long.new@example.com", 101L)).thenReturn(false);
         when(nhanVienRepository.save(any(NhanVien.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         UpdateNhanVienProfileRequest request = new UpdateNhanVienProfileRequest(
                 "Nguyễn Thành Long Mới",
                 LocalDate.of(1990, 5, 20),
                 GioiTinh.NAM,
-                "Địa chỉ mới cập nhật",
-                "0987654321",
-                "long.new@example.com");
+                "Địa chỉ mới cập nhật");
 
         NhanVienProfileResponse updated = profileService.updateProfileNhanVien(1L, request);
 
         assertEquals("Nguyễn Thành Long Mới", updated.hoTen());
-        assertEquals("long.new@example.com", updated.email());
-        assertEquals("0987654321", updated.soDienThoai());
+        assertEquals(LocalDate.of(1990, 5, 20), updated.ngaySinh());
         assertEquals("Địa chỉ mới cập nhật", updated.diaChi());
+        assertEquals("long.nt@example.com", updated.email());
+        assertEquals("0912345601", updated.soDienThoai());
         assertEquals(ChucVu.TRUONG_PHONG, updated.chucVu());
         verify(nhanVienRepository).save(nhanVien);
     }
-
-    @Test
-    void shouldThrowBusinessExceptionWhenEmailAlreadyExistsForAnotherNhanVien() {
-        when(nhanVienRepository.findByTaiKhoanId(1L)).thenReturn(Optional.of(nhanVien));
-        when(nhanVienRepository.existsByEmailIgnoreCaseAndIdNot("duplicate@example.com", 101L)).thenReturn(true);
-
-        UpdateNhanVienProfileRequest request = new UpdateNhanVienProfileRequest(
-                "Nguyễn Thành Long",
-                LocalDate.of(1988, 3, 14),
-                GioiTinh.NAM,
-                "Địa chỉ",
-                "0912345601",
-                "duplicate@example.com");
-
-        BusinessException exception = assertThrows(
-                BusinessException.class,
-                () -> profileService.updateProfileNhanVien(1L, request));
-        assertNotNull(exception.getErrors());
-        assertEquals(1, exception.getErrors().size());
-        assertEquals("email", exception.getErrors().get(0).field());
-        assertEquals("Email đã được sử dụng bởi nhân viên khác", exception.getErrors().get(0).message());
-        verify(nhanVienRepository, never()).save(any());
-    }
 }
-

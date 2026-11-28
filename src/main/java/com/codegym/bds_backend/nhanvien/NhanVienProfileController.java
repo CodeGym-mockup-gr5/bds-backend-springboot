@@ -36,7 +36,9 @@ public class NhanVienProfileController {
 
     @PutMapping
     @PreAuthorize("hasAnyRole('NHAN_VIEN', 'ADMIN')")
-    @Operation(summary = "Cập nhật thông tin cá nhân của nhân viên đang đăng nhập")
+    @Operation(summary = "Cập nhật thông tin cá nhân của nhân viên đang đăng nhập",
+            description = "Chỉ cho phép sửa họ tên, ngày sinh, giới tính, địa chỉ. "
+                    + "Email và số điện thoại bị khóa (liên hệ quản lý để thay đổi).")
     public ApiResponse<NhanVienProfileResponse> updateProfileNhanVien(
             @AuthenticationPrincipal JwtPrincipal principal,
             @Valid @RequestBody UpdateNhanVienProfileRequest request) {
