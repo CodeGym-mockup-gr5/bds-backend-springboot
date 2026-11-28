@@ -48,8 +48,8 @@ class KhachHangDuyetControllerTest {
 
     @Test
     void shouldReturnDanhSachChoDuyetWhenAdminRequests() throws Exception {
-        KhachHangChoDuyetResponse dong =
-                new KhachHangChoDuyetResponse(12L, "KH012", "Nguyễn Văn An", "0912345678", "an@example.com");
+        KhachHangChoDuyetResponse dong = new KhachHangChoDuyetResponse(
+                12L, "KH012", "Nguyễn Văn An", "0912345678", "an@example.com", "001234567890");
         when(khachHangDuyetService.getDanhSachKhachHangChoDuyet(any(Pageable.class)))
                 .thenReturn(new PageResponse<>(List.of(dong), 0, 20, 1, 1));
 
@@ -61,7 +61,8 @@ class KhachHangDuyetControllerTest {
                 .andExpect(jsonPath("$.data.content[0].maKh", is("KH012")))
                 .andExpect(jsonPath("$.data.content[0].hoTen", is("Nguyễn Văn An")))
                 .andExpect(jsonPath("$.data.content[0].soDienThoai", is("0912345678")))
-                .andExpect(jsonPath("$.data.content[0].email", is("an@example.com")));
+                .andExpect(jsonPath("$.data.content[0].email", is("an@example.com")))
+                .andExpect(jsonPath("$.data.content[0].soCccd", is("001234567890")));
     }
 
     @Test

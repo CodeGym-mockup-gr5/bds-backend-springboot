@@ -46,6 +46,6 @@ public class KhachHangDuyetService {
 
     private static KhachHangChoDuyetResponse toChoDuyetResponse(KhachHang khachHang) {
         return new KhachHangChoDuyetResponse(khachHang.getId(), khachHang.getMaKh(), khachHang.getHoTen(),
-                khachHang.getSoDienThoai(), khachHang.getEmail());
+                khachHang.getSoDienThoai(), khachHang.getEmail(), khachHang.getSoCccd());
     }
 }

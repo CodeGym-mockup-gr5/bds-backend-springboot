@@ -13,5 +13,7 @@ public record KhachHangChoDuyetResponse(
         @Schema(description = "Số điện thoại", example = "0912345678")
         String soDienThoai,
         @Schema(description = "Email", example = "an@example.com")
-        String email) {
+        String email,
+        @Schema(description = "Số CCCD", example = "001234567890")
+        String soCccd) {
 }
