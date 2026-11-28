@@ -1,7 +1,6 @@
 package com.codegym.bds_backend.khachhang;
 
 import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.nullValue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
@@ -97,7 +96,7 @@ class KhachHangProfileControllerTest {
     }
 
     @Test
-    void shouldUpdateProfileAndNormalizeBlankCccdWhenLoggedInAsKhachHang() throws Exception {
+    void shouldUpdateProfileAndIgnoreLockedEmailPhoneWhilePassingSoCccd() throws Exception {
         KhachHangProfileResponse response = new KhachHangProfileResponse(
                 20L,
                 "MKH-0020",
@@ -107,7 +106,7 @@ class KhachHangProfileControllerTest {
                 "10 Lê Lợi, Đà Nẵng",
                 "0905123456",
                 "hoa.tran@example.com",
-                null,
+                "048195000123",
                 true,
                 false,
                 TrangThaiDuyet.DA_DUYET);
@@ -120,9 +119,9 @@ class KhachHangProfileControllerTest {
                   "ngaySinh": "1995-08-15",
                   "gioiTinh": "NU",
                   "diaChi": "10 Lê Lợi, Đà Nẵng",
-                  "soDienThoai": "0905123456",
-                  "email": "hoa.tran@example.com",
-                  "soCccd": "   "
+                  "soDienThoai": "0999888777",
+                  "email": "fake@example.com",
+                  "soCccd": "048195000123"
                 }
                 """;
 
@@ -133,7 +132,9 @@ class KhachHangProfileControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success", is(true)))
                 .andExpect(jsonPath("$.message", is("Cập nhật thông tin cá nhân thành công")))
-                .andExpect(jsonPath("$.data.soCccd", is(nullValue())));
+                .andExpect(jsonPath("$.data.soDienThoai", is("0905123456")))
+                .andExpect(jsonPath("$.data.email", is("hoa.tran@example.com")))
+                .andExpect(jsonPath("$.data.soCccd", is("048195000123")));
 
         verify(khachHangProfileService).updateProfileKhachHang(
                 5L,
@@ -142,9 +143,7 @@ class KhachHangProfileControllerTest {
                         LocalDate.of(1995, 8, 15),
                         GioiTinh.NU,
                         "10 Lê Lợi, Đà Nẵng",
-                        "0905123456",
-                        "hoa.tran@example.com",
-                        null));
+                        "048195000123"));
     }
 
     @Test
@@ -152,8 +151,7 @@ class KhachHangProfileControllerTest {
         String body = """
                 {
                   "hoTen": "",
-                  "soDienThoai": "123",
-                  "email": "invalid-email",
+                  "ngaySinh": "2099-01-01",
                   "soCccd": "12345"
                 }
                 """;
@@ -170,16 +168,14 @@ class KhachHangProfileControllerTest {
     }
 
     @Test
-    void shouldReturnConflictWithFieldErrorWhenEmailDuplicates() throws Exception {
+    void shouldReturnConflictWithFieldErrorWhenSoCccdDuplicates() throws Exception {
         when(khachHangProfileService.updateProfileKhachHang(eq(5L), any(UpdateKhachHangProfileRequest.class)))
-                .thenThrow(BusinessException.fieldConflict("email", "Email đã được sử dụng"));
+                .thenThrow(BusinessException.fieldConflict("soCccd", "Số CCCD đã tồn tại"));
 
         String body = """
                 {
                   "hoTen": "Trần Thị Hoa",
-                  "soDienThoai": "0905123456",
-                  "email": "dup@example.com",
-                  "soCccd": "048195000123"
+                  "soCccd": "048195000888"
                 }
                 """;
 
@@ -189,18 +185,15 @@ class KhachHangProfileControllerTest {
                         .content(body))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.success", is(false)))
-                .andExpect(jsonPath("$.message", is("Email đã được sử dụng")))
-                .andExpect(jsonPath("$.errors[0].field", is("email")))
-                .andExpect(jsonPath("$.errors[0].message", is("Email đã được sử dụng")));
+                .andExpect(jsonPath("$.errors[0].field", is("soCccd")))
+                .andExpect(jsonPath("$.errors[0].message", is("Số CCCD đã tồn tại")));
     }
 
     @Test
     void shouldReturnForbiddenWhenNonKhachHangUpdatesProfile() throws Exception {
         String body = """
                 {
-                  "hoTen": "Trần Thị Hoa",
-                  "soDienThoai": "0905123456",
-                  "email": "hoa@example.com"
+                  "hoTen": "Trần Thị Hoa"
                 }
                 """;
 
@@ -223,9 +216,7 @@ class KhachHangProfileControllerTest {
     void shouldReturnUnauthorizedWhenAnonymousUpdatesProfile() throws Exception {
         String body = """
                 {
-                  "hoTen": "Trần Thị Hoa",
-                  "soDienThoai": "0905123456",
-                  "email": "hoa@example.com"
+                  "hoTen": "Trần Thị Hoa"
                 }
                 """;
 

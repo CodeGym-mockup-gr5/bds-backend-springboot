@@ -36,7 +36,10 @@ public class KhachHangProfileController {
 
     @PutMapping
     @PreAuthorize("hasRole('KHACH_HANG')")
-    @Operation(summary = "Cập nhật thông tin cá nhân của khách hàng đang đăng nhập")
+    @Operation(summary = "Cập nhật thông tin cá nhân của khách hàng đang đăng nhập",
+            description = "Cho phép sửa họ tên, ngày sinh, giới tính, địa chỉ. "
+                    + "Email và số điện thoại bị khóa (liên hệ quản lý để thay đổi). "
+                    + "Số CCCD chỉ cho phép bổ sung một lần khi đang trống; đã có thì khóa.")
     public ApiResponse<KhachHangProfileResponse> updateProfileKhachHang(
             @AuthenticationPrincipal JwtPrincipal principal,
             @Valid @RequestBody UpdateKhachHangProfileRequest request) {

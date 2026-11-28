@@ -36,6 +36,7 @@ build/
 AGENTS.md
 CLAUDE.md
 docs/
+.agents/
 
 # Cấu hình bí mật
 application-local.yml

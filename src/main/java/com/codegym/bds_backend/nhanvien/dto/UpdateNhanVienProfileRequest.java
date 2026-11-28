@@ -1,7 +1,6 @@
 package com.codegym.bds_backend.nhanvien.dto;
 
 import com.codegym.bds_backend.common.enums.GioiTinh;
-import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Past;
@@ -24,15 +23,5 @@ public record UpdateNhanVienProfileRequest(
 
         @NotBlank(message = "Xin mời nhập đầy đủ thông tin")
         @Size(max = 255, message = "Địa chỉ tối đa 255 ký tự")
-        String diaChi,
-
-        @NotBlank(message = "Xin mời nhập đầy đủ thông tin")
-        @Pattern(regexp = "^0[0-9]{9}$", message = "Số điện thoại không hợp lệ")
-        String soDienThoai,
-
-        @NotBlank(message = "Xin mời nhập đầy đủ thông tin")
-        @Email(message = "Email không hợp lệ!")
-        @Size(max = 254, message = "Email tối đa 254 ký tự")
-        String email) {
+        String diaChi) {
 }
-
